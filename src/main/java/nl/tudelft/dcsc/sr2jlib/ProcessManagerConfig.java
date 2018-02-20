@@ -21,12 +21,24 @@
  */
 package nl.tudelft.dcsc.sr2jlib;
 
+import nl.tudelft.dcsc.sr2jlib.grid.GridObserver;
+
 /**
  * The configuration class for the @see GeneticManager
  *
  * @author Dr. Ivan S. Zapreev
  */
 public class ProcessManagerConfig extends BreedingManagerConfig {
+
+    /**
+     * The callback object to be used once the process manager has stopped
+     */
+    public final FinishedCallback m_done_cb;
+
+    /**
+     * The grid observer object
+     */
+    public final GridObserver m_observer;
 
     /**
      * The multiplier (coefficient) the defines the number of initial population
@@ -47,22 +59,32 @@ public class ProcessManagerConfig extends BreedingManagerConfig {
     /**
      * The basic constructor
      *
-     * @param init_pop_mult the multiple for the initial population
-     * @param num_workers the number of worker threads for this manager
-     * @param max_num_reps the maximum number of reproductions
-     * @param num_dofs the number of dimensions for the individual
-     * @param size_x the number of cells in x
-     * @param size_y the number of cells in y
-     * @param ch_sp_x the child spread in x, relative to the parent
-     * @param ch_sp_y the child spread in y, relative to the parent
+     * @param done_cb the call back to be called once this manager has finished
+     * @param observer the fitness observer instance to monitor the population
+     * @param init_pop_mult the initial population coefficient relative to the
+     * number of grid cells, from (0.0,1.0]
+     * @param num_workers the number of worker threads for this manager, each
+     * thread works on reproducing individuals
+     * @param max_num_reps the maximum number of reproductions, defined the
+     * run-time of the symbolic regression on the grid
+     * @param num_dofs the number of dimensions for the individual's vector
+     * function
+     * @param size_x the number of the population grid cells in x
+     * @param size_y the number of the population grid cells in y
+     * @param ch_sp_x the number of positions from the parent in x the children
+     * will be spread
+     * @param ch_sp_y the number of positions from the parent in y the children
+     * will be spread
      * @param mgr_id the id of the population manager
-     * @param sel_type the individual selection type,
-     * @param is_allow_dying if true then individuals are dying after they had
-     * some number of children
+     * @param sel_type the individual's selection type
+     * @param is_allow_dying if true then individuals are dying after they had a
+     * certain number of children
      * @param min_chld_cnt the minimum number of children before dying
      * @param max_chld_cnt the maximum number of children before dying
      */
     public ProcessManagerConfig(
+            final FinishedCallback done_cb,
+            final GridObserver observer,
             final double init_pop_mult,
             final int num_workers,
             final long max_num_reps,
@@ -76,6 +98,8 @@ public class ProcessManagerConfig extends BreedingManagerConfig {
             final int max_chld_cnt) {
         super(num_dofs, size_x, size_y, ch_sp_x, ch_sp_y, mgr_id,
                 sel_type, is_allow_dying, min_chld_cnt, max_chld_cnt);
+        this.m_done_cb = done_cb;
+        this.m_observer = observer;
         this.m_init_pop_mult = init_pop_mult;
         this.m_num_workers = num_workers;
         this.m_max_num_reps = max_num_reps;

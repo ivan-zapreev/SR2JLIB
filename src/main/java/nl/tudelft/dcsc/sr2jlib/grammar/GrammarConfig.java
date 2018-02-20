@@ -29,7 +29,6 @@ package nl.tudelft.dcsc.sr2jlib.grammar;
 public class GrammarConfig {
 
     //The grammar string
-
     /**
      *
      */
@@ -85,16 +84,18 @@ public class GrammarConfig {
     public final double m_tm_vs_ntm;
 
     /**
+     * The basic constructor
      *
-     * @param grammar the grammar
-     * @param max_ts set the maximum allowed tree size
-     * @param ch_vs_rep the change versus replace ration from the range [0,1]
-     * @param num_vars the number of variables
-     * @param min_node_grow the minimum node grow coefficient
-     * @param max_node_grow the maximum node grow coefficient
+     * @param grammar the grammar's textual description
+     * @param max_ts the maximum allowed generated expression tree size
+     * @param ch_vs_rep the change versus replace ratio from the range [0,1]
+     * @param num_vars the number of variables to be used in this grammar
+     * @param min_node_grow the minimum node grow coefficient, a positive double
+     * @param max_node_grow the maximum node grow coefficient, a positive double
      * @param is_prop_pnodes true if placement nodes are to be propagated
      * @param max_gd the maximum grammar depth for fixed point iteration
-     * @param tm_vs_ntm terminal versus non terminal mutation ratio
+     * @param tm_vs_ntm terminal versus non terminal mutation ratio from the
+     * range [0,1]
      */
     public GrammarConfig(final String grammar,
             final int max_ts, final double ch_vs_rep,

@@ -56,7 +56,7 @@ public class Grammar implements GrammarProvider {
     private static final String ENTRY_NUM_STR = "R";
 
     //Stores the manager to dof index to grammar mappints
-    private static final Map<Integer, Map<Integer, Grammar>> m_mgr_grammars = new HashMap();
+    private static final Map<Integer, Map<Integer, Grammar>> MGR_GRAMMS = new HashMap();
     private static int max_mgr_id = 0;
     private static int max_dof_id = 0;
     private static Grammar[][] m_grammars = null;
@@ -83,10 +83,10 @@ public class Grammar implements GrammarProvider {
     public static void register_grammar(final int mgr_id,
             final int dof_id, final Grammar grammar) {
         //Get the current dof to grammar mapping for the manager
-        Map<Integer, Grammar> dof_grammars = m_mgr_grammars.get(mgr_id);
+        Map<Integer, Grammar> dof_grammars = MGR_GRAMMS.get(mgr_id);
         if (dof_grammars == null) {
             dof_grammars = new HashMap();
-            m_mgr_grammars.put(mgr_id, dof_grammars);
+            MGR_GRAMMS.put(mgr_id, dof_grammars);
         }
         dof_grammars.put(dof_id, grammar);
 
@@ -99,7 +99,7 @@ public class Grammar implements GrammarProvider {
      */
     public static void prepare_grammars() {
         m_grammars = new Grammar[max_mgr_id + 1][max_dof_id + 1];
-        for (Entry<Integer, Map<Integer, Grammar>> mgr_entry : m_mgr_grammars.entrySet()) {
+        for (Entry<Integer, Map<Integer, Grammar>> mgr_entry : MGR_GRAMMS.entrySet()) {
             for (Entry<Integer, Grammar> dof_entry : mgr_entry.getValue().entrySet()) {
                 m_grammars[mgr_entry.getKey()][dof_entry.getKey()] = dof_entry.getValue();
             }
@@ -110,7 +110,7 @@ public class Grammar implements GrammarProvider {
      * Must be called after all the before new set of grammars gets registered
      */
     public static void clear_grammars() {
-        m_mgr_grammars.clear();
+        MGR_GRAMMS.clear();
         max_mgr_id = 0;
         max_dof_id = 0;
         m_grammars = null;

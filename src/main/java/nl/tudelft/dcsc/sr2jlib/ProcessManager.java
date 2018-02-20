@@ -32,7 +32,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
-import javafx.concurrent.Task;
 
 /**
  * This is a population manager class responsible for managing the GP process
@@ -42,21 +41,6 @@ import javafx.concurrent.Task;
 public class ProcessManager {
 
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class.getName());
-
-    /**
-     * The functional interface used to notify the user class that the process
-     * manager has finished. I.e. the symbolic regression has stopped.
-     */
-    @FunctionalInterface
-    public interface FinishedCallback {
-
-        /**
-         * Is to be called when the execution of the manager is finished
-         *
-         * @param mgr the manager calling the notifier
-         */
-        void finished(final ProcessManager mgr);
-    }
 
     private final FinishedCallback m_done_cb;
     private final GridObserver m_observer;
@@ -70,14 +54,11 @@ public class ProcessManager {
     /**
      * The basic constructor
      *
-     * @param done_cb the call back to be called once this manager is done
-     * @param observer the fitness observer
      * @param conf the manger configuration object
      */
-    public ProcessManager(final FinishedCallback done_cb,
-            final GridObserver observer, final ProcessManagerConfig conf) {
-        this.m_done_cb = done_cb;
-        this.m_observer = observer;
+    public ProcessManager(final ProcessManagerConfig conf) {
+        this.m_done_cb = conf.m_done_cb;
+        this.m_observer = conf.m_observer;
         this.m_init_pop_mult = conf.m_init_pop_mult;
         this.m_num_workers = conf.m_num_workers;
         this.m_max_num_reps = conf.m_max_num_reps;
