@@ -154,14 +154,6 @@ public abstract class Expression {
     public abstract void materialize(int max_size);
 
     /**
-     * Allows to get a signature of the expression
-     *
-     * @return the expression's signature
-     * @throws UnsupportedOperationException in case the method is nod supported
-     */
-    public abstract String get_signature();
-
-    /**
      * Allows to serialize the expression to a mathematical string using the
      * java.lang.Math functions
      *

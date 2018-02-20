@@ -419,7 +419,32 @@ public class FunctExpr extends Expression {
         m_is_terminal = (is_placement() && (m_child.get(0).is_terminal()));
     }
 
-    @Override
+    /**
+     * Allows to get the children nodes of this expression node if the node is
+     * materialized.
+     *
+     * @return the children nodes of this expression
+     */
+    public List<Expression> get_children() {
+        return m_child;
+    }
+
+    /**
+     * Allows to get the function textual description of the expression node as
+     * specified by the grammar.
+     *
+     * @return the function textual description as specified by the grammar.
+     */
+    public String get_function() {
+        return m_func;
+    }
+
+    /**
+     * Allows to get a signature of the expression
+     *
+     * @return the expression's signature
+     * @throws UnsupportedOperationException in case the method is nod supported
+     */
     public String get_signature() {
         return m_sign;
     }

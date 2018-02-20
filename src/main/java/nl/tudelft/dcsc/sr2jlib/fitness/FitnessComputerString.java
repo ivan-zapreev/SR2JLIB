@@ -34,24 +34,24 @@ public abstract class FitnessComputerString extends FitnessComputerExpression {
 
     @Override
     public Fitness compute_fitness(
-            final Expression[] exp_trees, final int mgr_id) {
+            final int mgr_id, final Expression[] exp_trees) {
         //Get the array of serialized expressions
         final String exp_strs[] = new String[exp_trees.length];
         for (int idx = 0; idx < exp_trees.length; ++idx) {
             exp_strs[idx] = exp_trees[idx].serialize();
         }
-        return compute_fitness(exp_strs, mgr_id);
+        return compute_fitness(mgr_id, exp_strs);
     }
 
     /**
      * Allows to compute fitness for the given class and manager id
      *
-     * @param exp_strs the vector function of the individual given by the
-     * expression trees
      * @param mgr_id the population manager id from which the individual is
      * originated
+     * @param exp_strs the vector function of the individual given by the
+     * expression trees
      * @return individual's fitness
      */
     public abstract Fitness compute_fitness(
-            final String[] exp_strs, final int mgr_id);
+            final int mgr_id, final String[] exp_strs);
 }

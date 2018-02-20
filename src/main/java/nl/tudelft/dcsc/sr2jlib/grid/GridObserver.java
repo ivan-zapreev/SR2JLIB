@@ -33,7 +33,6 @@ public interface GridObserver {
      */
     public void start_observing();
 
-
     /**
      * Will be called once a new individual becomes a population part.
      * Note that, there could have been another individual in the position

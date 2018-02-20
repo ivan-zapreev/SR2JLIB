@@ -224,10 +224,11 @@ class FunctGrammarEntry implements GrammarEntry {
             final Expression exp, final double weight) {
         //Ony functional expressions have signatures
         if (exp instanceof FunctExpr) {
-            Randomizer rnd = rands.get(exp.get_signature());
+            final FunctExpr fexp = (FunctExpr) exp;
+            Randomizer rnd = rands.get(fexp.get_signature());
             if (rnd == null) {
                 rnd = new Randomizer();
-                rands.put(exp.get_signature(), rnd);
+                rands.put(fexp.get_signature(), rnd);
             }
             rnd.register(exp, weight);
         }
@@ -333,7 +334,7 @@ class FunctGrammarEntry implements GrammarEntry {
 
         //Iterate over the functions searching for placements
         for (int idx = 0; idx < m_funct.size(); ++idx) {
-            final Expression func = m_funct.get(idx);
+            final FunctExpr func = (FunctExpr) m_funct.get(idx);
             final Double weight = m_weight.get(idx);
             LOGGER.log(Level.FINE, "Got funciton: {0} of weight: {1}",
                     new Object[]{func, weight});

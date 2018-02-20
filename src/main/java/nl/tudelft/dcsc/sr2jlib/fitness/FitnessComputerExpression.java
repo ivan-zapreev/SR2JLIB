@@ -32,37 +32,16 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
  */
 public abstract class FitnessComputerExpression {
 
-    //Stores the fitness computer instance
-    private static FitnessComputerExpression m_inst = null;
-
-    /**
-     * Allows to set the instance of the fitness computer.
-     *
-     * @param inst the instance to be set
-     */
-    public static void set_inst(final FitnessComputerExpression inst) {
-        m_inst = inst;
-    }
-
-    /**
-     * Allows to get the instance of the fitness computer
-     *
-     * @return the instance of the fitness computer or null if none is set
-     */
-    public static FitnessComputerExpression inst() {
-        return m_inst;
-    }
-
     /**
      * Allows to compute fitness for the given class and manager id
      *
-     * @param exp_trees the vector function of the individual given by the
-     * expression trees
      * @param mgr_id the population manager id from which the individual is
      * originated
+     * @param exp_trees the vector function of the individual given by the
+     * expression trees
      * @return individual's fitness
      */
-    public abstract Fitness compute_fitness(
-            final Expression[] exp_trees, final int mgr_id);
+    public abstract Fitness compute_fitness(final int mgr_id,
+            final Expression[] exp_trees);
 
 }

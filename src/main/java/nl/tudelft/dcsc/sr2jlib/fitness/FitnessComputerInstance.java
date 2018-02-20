@@ -43,7 +43,7 @@ public abstract class FitnessComputerInstance extends FitnessComputerClass {
 
     @Override
     public final Fitness compute_fitness(
-            final String class_name, final int mgr_id)
+            final int mgr_id, final String class_name)
             throws IllegalStateException, IllegalArgumentException,
             ClassNotFoundException, IllegalAccessException,
             InvocationTargetException {
@@ -56,7 +56,7 @@ public abstract class FitnessComputerInstance extends FitnessComputerClass {
             for (int idx = 0; idx < num_dofs; ++idx) {
                 vf[idx] = ind_class.getMethod(Creator.EVALUATE + idx, double[].class);
             }
-            return compute_fitness(vf, mgr_id);
+            return compute_fitness(mgr_id, vf);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
             final String msg = "Failed when loading and instantiating of " + class_name;
             LOGGER.log(Level.SEVERE, msg, ex);
@@ -70,9 +70,9 @@ public abstract class FitnessComputerInstance extends FitnessComputerClass {
      *
      * Allows to compute fitness for the given individual vector function methods and manager id
      *
-     * @param vf an array of individual class methods representing the vector function
      * @param mgr_id the population manager id from which the individual is
      * originated
+     * @param vf an array of individual class methods representing the vector function
      * @return individual's fitness
      * @throws IllegalStateException some illegal state
      * @throws IllegalArgumentException an illegal argument value
@@ -84,7 +84,7 @@ public abstract class FitnessComputerInstance extends FitnessComputerClass {
      * (should not be happening)
      */
     public abstract Fitness compute_fitness(
-            final Method[] vf, final int mgr_id)
+            final int mgr_id, final Method[] vf)
             throws IllegalStateException, IllegalArgumentException,
             ClassNotFoundException, IllegalAccessException,
             InvocationTargetException;

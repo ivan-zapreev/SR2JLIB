@@ -59,8 +59,7 @@ public class ProcessManagerConfig extends BreedingManagerConfig {
     /**
      * The basic constructor
      *
-     * @param done_cb the call back to be called once this manager has finished
-     * @param observer the fitness observer instance to monitor the population
+     * @param mgr_id the id of the population manager
      * @param init_pop_mult the initial population coefficient relative to the
      * number of grid cells, from (0.0,1.0]
      * @param num_workers the number of worker threads for this manager, each
@@ -75,28 +74,30 @@ public class ProcessManagerConfig extends BreedingManagerConfig {
      * will be spread
      * @param ch_sp_y the number of positions from the parent in y the children
      * will be spread
-     * @param mgr_id the id of the population manager
      * @param sel_type the individual's selection type
      * @param is_allow_dying if true then individuals are dying after they had a
      * certain number of children
      * @param min_chld_cnt the minimum number of children before dying
      * @param max_chld_cnt the maximum number of children before dying
+     * @param observer the fitness observer instance to monitor the population
+     * @param done_cb the call back to be called once this manager has finished
      */
     public ProcessManagerConfig(
-            final FinishedCallback done_cb,
-            final GridObserver observer,
+            final int mgr_id,
             final double init_pop_mult,
             final int num_workers,
             final long max_num_reps,
             final int num_dofs,
             final int size_x, final int size_y,
             final int ch_sp_x, final int ch_sp_y,
-            final int mgr_id,
             final SelectionType sel_type,
             final boolean is_allow_dying,
             final int min_chld_cnt,
-            final int max_chld_cnt) {
-        super(num_dofs, size_x, size_y, ch_sp_x, ch_sp_y, mgr_id,
+            final int max_chld_cnt,
+            final GridObserver observer,
+            final FinishedCallback done_cb
+            ) {
+        super(mgr_id, num_dofs, size_x, size_y, ch_sp_x, ch_sp_y,
                 sel_type, is_allow_dying, min_chld_cnt, max_chld_cnt);
         this.m_done_cb = done_cb;
         this.m_observer = observer;

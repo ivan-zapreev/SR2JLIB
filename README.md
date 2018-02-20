@@ -1,6 +1,6 @@
 #Introduction
 
-**SR2JLIB** is a Netbeans project supplying a Java library for *Grammar-based Symbolic Regression* (**SR**), powered by *Genetic Programming* (**GP**). 
+**SR2JLIB** is a Netbeans project supplying a Java library for grammar-guided *Symbolic Regression* (**SR**) [Koza93], powered by *Genetic Programming* (**GP**) [Koz94, WHM+97], and more specifically *Grammar-Guided Genetic Programming* (**GGGP**) [GCA+08].
 
 The approach realized in this library differs from standard GP in that the population is placed on a 2D grid. The latter defines habitat for the individuals which are reproducing in parallel and thus there is no notion of staging. The reproduction process is ensured by multiple parallel threads randomly choosing individuals from the current population and allowing them to reproduce trying to settle in the pre-defined neighborhood of their ancestor. Each time a new individual is created it is attempted to be placed in the neighboring cells based on tournament or probabilistic tournament selection. 
 
@@ -29,7 +29,7 @@ Example projects of using the library are provided by:
 1. <https://github.com/ivan-zapreev/SR2JLIB_EX>
 2. <https://github.com/ivan-zapreev/SCOTS2SR>
 
-The former is a Java-only project giving a basic example of how the library can be used, it contains multiple comments and is self-explanatory. The latter is a more involved JNI based project for symbolic fitting of SCOTSv2.0 <https://gitlab.lrz.de/matthias/SCOTSv0.2> BDD controllers. We also suggest taking a thorough look at the Java Doc of the library stores in the `./api/` folder of the project.
+The former is a Java-only project giving a basic example of how the library can be used, it contains multiple comments and is self-explanatory. The latter is a more involved JNI based project for symbolic fitting of SCOTSv2.0 <https://gitlab.lrz.de/matthias/SCOTSv0.2> BDD controllers [Run16]. We also suggest taking a thorough look at the Java Doc of the library stores in the `./api/` folder of the project.
 
 It is a known issue with the the java8 JIT compiler that its caches can become full thus preventing further individuals compilation and thus proper functioning of the library. Therefore, in case a JIT compilation is to be used, see the section on library interfaces further in the text, we suggest supplying java with the following command line arguments:
 
@@ -41,9 +41,11 @@ It is a known issue with the the java8 JIT compiler that its caches can become f
 These are to be provided to java in the application, which uses **SR2JLIB**. If needed, the cache sizes can be increased even further.
 
 #Main concepts
+
 This section introduces the main concepts of the library.
 
 ##Grammar
+
 The `grammar` is defined as a set of new-line-separated grammar entries:
 
 ```
@@ -97,7 +99,6 @@ For completeness, below we give an example grammar which assumes uniform probabi
 
 ```
 R := [x1](D); [x1](V); [$abs(x1)](R)@0.1; [$sin(x1)](R); [$cos(x1)](R); [$sinh(x1)](R); [$cosh(x1)](R); [$tan(x1)](tR); [$tanh(x1)](R); [$acos(x1)](aR); [$asin(x1)](aR); [$sqrt(x1)](npR); [$cbrt(x1)](R); [$ceil(x1)](R); [$floor(x1)](R); [$log(x1)](lR); [$log10(x1)](lR); [$max(x1,x2)](R,R) ; [$min(x1,x2)](R, R) ; [$pow(x1,x2)](R,pI); [$signum(x1)](R); [-x1](R); [x1/x2](R,nR); [x1*x2](R,R); [x1+x2](R,R); [x1-x2](R,R) ; [x1 ? x2 : x3](B,R,R)
-
 B := [x1](L) @0.01; [x1!=x2](R,R); [x1==x2](R,R); [x1<x2](R,R); [x1<=x2](R,R); [x1>x2](R,R); [x1>=x2](R,R); [!x1](B) ; [x1&&x2](B,B); [x1||x2](B,B)
 
 //User defined by demand:
@@ -165,6 +166,7 @@ manager.stop(true);
 As one can see all of the `Grammar` and `ProcessManager` class parameters are encapsulated in the corresponding configuration objects. The latter, including the suggested and default values will be discussed in the next section.
 
 ##Configuration objects
+
 Let us consider the two configuration objects `GrammarConfig` and `ProcessManagerConfig`.
 
 The `GrammarConfig` is used to configure a grammar and has the following constructor:
@@ -221,8 +223,7 @@ The `ProcessManagerConfig` is used to configure a process manager and has the fo
     /**
      * The basic constructor
      *
-     * @param done_cb the call back to be called once this manager has finished
-     * @param observer the fitness observer instance to monitor the population
+     * @param mgr_id the id of the population manager
      * @param init_pop_mult the initial population coefficient relative to the
      * number of grid cells, from (0.0,1.0]
      * @param num_workers the number of worker threads for this manager, each
@@ -237,34 +238,35 @@ The `ProcessManagerConfig` is used to configure a process manager and has the fo
      * will be spread
      * @param ch_sp_y the number of positions from the parent in y the children
      * will be spread
-     * @param mgr_id the id of the population manager
      * @param sel_type the individual's selection type
      * @param is_allow_dying if true then individuals are dying after they had a
      * certain number of children
      * @param min_chld_cnt the minimum number of children before dying
      * @param max_chld_cnt the maximum number of children before dying
+     * @param observer the fitness observer instance to monitor the population
+     * @param done_cb the call back to be called once this manager has finished
      */
     public ProcessManagerConfig(
-            final FinishedCallback done_cb,
-            final GridObserver observer, 
+            final int mgr_id,
             final double init_pop_mult,
             final int num_workers,
             final long max_num_reps,
             final int num_dofs,
             final int size_x, final int size_y,
             final int ch_sp_x, final int ch_sp_y,
-            final int mgr_id,
             final SelectionType sel_type,
             final boolean is_allow_dying,
             final int min_chld_cnt,
-            final int max_chld_cnt){...}
+            final int max_chld_cnt,
+            final GridObserver observer, 
+            final FinishedCallback done_cb){...}
 ```
 The default suggested values for this configuration class are as follows:
 
 ```java
 init_pop_mult = 0.1;
 num_workers = 20;
-max_num_reps = Long.MAX_VAL;
+max_num_reps = Long.MAX_VALUE;
 size_x = 30;
 size_y = 30;
 ch_sp_x = 1;
@@ -278,10 +280,63 @@ The value of `mgr_id` depends on the number of managers, we recommend using mana
 
 Last but not least `done_cb` and `observer` provide the call-back objects. The former is just an object realizing a functional interface to be called once the process manager has finished the SR procedure. The latter is a grid observing object allowing to monitor all of the population changes. We shall discuss these and other interfaces in the next section. 
 
-##Listeners and Observers
+##Listeners, Observers, and Computers
 
+There are several main interfaces that are to be realized by the application using  **SR2JLIB**, the first three of them are:
+
+1. `nl.tudelft.dcsc.sr2jlib.FinishedCallback` - a functional interface to be used by the `ProcessManager` to notify the user that the SR is finished;
+2. `nl.tudelft.dcsc.sr2jlib.grid.GridObserver` - an interface allowing to monitor when the symbolic regression is started and stopped as well as adding/killing new/old individuals on the grid;
+3. `nl.tudelft.dcsc.sr2jlib.ErrorListener` - an optional error listener to monitor exceptions and errors occurring while SR. For instance, a broken grammar can result in non-compilable individual classes and these exceptions will be reported through an instance of this interface.
+
+Objects of classes implementing `FinishedCallback` and `GridObserver` are provided as arguments for the `ProcessManagerConfig` class constructor. An object implementing `ErrorListener` is to be set explicitly from the code through the
+
+```java
+    /**
+     * Allows to set a new instance of the error listener
+     *
+     * @param new_el the new error listener
+     * @return an old error listener
+     */
+    public ErrorListener set_listener(final ErrorListener new_el){...}
+```
+
+method of the `nl.tudelft.dcsc.sr2jlib.err.ErrorManager` class. 
+
+Other interfaces, at least one of which needs to be implemented, are used for individual's fitness computations. These are given by the abstract classes located in the `nl.tudelft.dcsc.sr2jlib.fitness` package and require implementing their
+
+```java
+public abstract Fitness compute_fitness(final int mgr_id, ...);
+```
+
+methods. The concrete abstract class to inherit from, and thus the `compute_fitness` method to be implemented, depends on the user preference. We classify them based on what is provided as an argument for the `compute_fitness` method:
+
+1. `FitnessComputerExpression` - the individual's vector function expression trees.
+2. `FitnessComputerString` - the individual's vector function serialized as Java expression strings.
+3. `FitnessComputerClass` - the individual's vector function compiled into a java class.
+4. `FitnessComputerInstance` - the individual's vector function compiled and instantiated as a java object.
+
+In order to set the fitness computer class as the one to be used, one requires using the
+
+```java
+    /**
+     * Allows to set the instance of the fitness computer.
+     *
+     * @param inst the instance to be set
+     */
+    public static void set_inst(final FitnessComputerExpression inst) {...}
+```
+
+method of the `FitnessManager` class;
 
 ##Expression trees
+
+Each individual's vector function dimension is represented in a form of a Java numeric expression. The latter is initially stored in a form of a tree where non-terminal nodes correspond to operations and function and terminal nodes correspond to numerical or boolean constants, or free variables. The classes used to form expression trees are stored in the `nl.tudelft.dcsc.sr2jlib.grammar.expr` package. Each tree node is an instance of the `Expression` class. Non-terminal nodes are instances of the `FunctExpr` class and terminal ones of the `TermExpr` class. The latter has three child classes:
+
+1. `BConstExpr` - a boolean constant expression
+2. `NConstExpr` - a numerical constant expression
+3. `VarExpr` - a free variable expression
+
+All of these have interface functions in order to traverse through the expression tree and get information of each of its nodes. For more detail consider reading the Java Doc.
 
 #Licensing 
 
@@ -292,7 +347,9 @@ This software is distributed in the hope that it will be useful, but **WITHOUT A
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #Literature
-1. [SCOTSv2.0]
-2. [GP]
-3. [SR]
-4. [G-SP]
+
+1. [Koza93] John R. Koza; Martin A. Keane; James P. Rice (1993). "Performance improvement of machine learning via automatic discovery of facilitating functions as applied to a problem of symbolic system identification" (PDF). IEEE International Conference on Neural Networks. San Francisco: IEEE. pp. 191–198.
+2. [Koz94] John R. Koza. Genetic programming as a means for programming computers by natural selection. Statistics and Computing, 4(2):87–112, 1994.
+3. [WHM+97] M. J. Willis, H. G. Hiden, P. Marenbach, B. McKay, and G. A. Montague. Genetic programming: an introduction and survey of applications. In Second International Conference On Genetic Algorithms In Engineering Systems: Innovations And Applications, pages 314–319, Sep 1997.
+4. [GCA+08] Manrique Gamo, Daniel and Ríos Carrión, Juan and Rodríguez-Patón Aradas, Alfonso (2008). Grammar-Guided Genetic Programming. In: "Encyclopedia of Artificial Intelligence". Information Science Reference, EEUU, pp. 767-773.
+5. [Run16] Rungger, M. and Zamani, M. (2016). SCOTS: A tool for the synthesis of symbolic controllers. In Proceedings of the 19th International Conference on Hybrid Systems: Computation and Control, HSCC, 99–104.

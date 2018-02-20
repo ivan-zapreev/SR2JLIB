@@ -412,7 +412,7 @@ public class Grammar implements GrammarProvider {
     private Expression change(final Expression to_mutate_node, Expression mutant) {
         if (to_mutate_node instanceof FunctExpr) {
             //Get the expression's signature
-            final String signature = to_mutate_node.get_signature();
+            final String signature = ((FunctExpr) to_mutate_node).get_signature();
             //Get an expression with the same signature
             LOGGER.log(Level.FINE, "Exchanging node of type: {0}, signature {1}",
                     new Object[]{to_mutate_node.get_expr_type(), signature});
@@ -437,8 +437,9 @@ public class Grammar implements GrammarProvider {
                 }
             }
         } else {
-            //If we are here then it is a Variable or a Numeric/boolean constant
-            //So the change then boils down to a simple node re-materialization.
+            //If we are here then it is a terminal node, i.e. a Variable or a
+            //Numeric/boolean constant, the change then boils down to a simple
+            //node re-materialization.
             to_mutate_node.materialize(1);
         }
 

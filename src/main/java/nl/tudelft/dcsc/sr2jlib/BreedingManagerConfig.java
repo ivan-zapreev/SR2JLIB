@@ -63,22 +63,23 @@ public class BreedingManagerConfig extends AreaLockerConfig {
     /**
      * The basic constructor
      *
+     * @param mgr_id the id of the population manager
      * @param num_dofs the number of dimensions for the individual
      * @param size_x the number of cells in x
      * @param size_y the number of cells in y
      * @param ch_sp_x the child spread in x, relative to the parent
      * @param ch_sp_y the child spread in y, relative to the parent
-     * @param mgr_id the id of the population manager
      * @param sel_type the individual selection type,
      * @param is_allow_dying if true then individuals are dying after they had
      * some number of children
      * @param min_chld_cnt the minimum number of children before dying
      * @param max_chld_cnt the maximum number of children before dying
      */
-    public BreedingManagerConfig(final int num_dofs,
+    public BreedingManagerConfig(
+            final int mgr_id,
+            final int num_dofs,
             final int size_x, final int size_y,
             final int ch_sp_x, final int ch_sp_y,
-            final int mgr_id,
             final SelectionType sel_type,
             final boolean is_allow_dying,
             final int min_chld_cnt,

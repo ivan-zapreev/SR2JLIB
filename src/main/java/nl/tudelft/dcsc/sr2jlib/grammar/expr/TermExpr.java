@@ -37,7 +37,6 @@ public abstract class TermExpr<ValueType> extends Expression {
     private static final Logger LOGGER = Logger.getLogger(TermExpr.class.getName());
 
     //Stores the random constant value
-
     /**
      * The value storing object for the materialized terminal expression
      */
@@ -61,6 +60,16 @@ public abstract class TermExpr<ValueType> extends Expression {
     protected TermExpr(final TermExpr<ValueType> other) {
         super(other);
         this.m_value = other.m_value;
+    }
+
+    /**
+     * Allows to get the value of the materialized terminal expression.
+     *
+     * @return the boolean/numeric value for a boolean/numeric expression and a
+     * variable index for the free variable
+     */
+    public ValueType get_value() {
+        return m_value;
     }
 
     @Override
@@ -101,13 +110,6 @@ public abstract class TermExpr<ValueType> extends Expression {
     @Override
     public int get_max_size() {
         return MIN_MAX_VALUES[1];
-    }
-
-    @Override
-    public String get_signature() {
-        LOGGER.log(Level.SEVERE, "Can not get signature of {0}", this.getClass().getName());
-        throw new UnsupportedOperationException("Can not get signature of "
-                + this.getClass().getName());
     }
 
     @Override

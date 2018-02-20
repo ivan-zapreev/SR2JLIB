@@ -56,7 +56,7 @@ public abstract class FitnessComputerClass extends FitnessComputerString {
 
     @Override
     public Fitness compute_fitness(
-            final String[] exp_strs, final int mgr_id) {
+            final int mgr_id, final String[] exp_strs) {
         Fitness ftn = null;
         //Acquire the uid for a unique individual class name
         final long uid = acquire_uid();
@@ -65,7 +65,7 @@ public abstract class FitnessComputerClass extends FitnessComputerString {
             //Attempt compilation
             Creator.prepare(uid, exp_strs);
             //Comute fitness
-            ftn = compute_fitness(class_name, mgr_id);
+            ftn = compute_fitness(mgr_id, class_name);
             //Remove the old class from the loader
             Loader.remove_old(class_name);
         } catch (IllegalArgumentException | IllegalStateException
@@ -84,9 +84,9 @@ public abstract class FitnessComputerClass extends FitnessComputerString {
     /**
      * Allows to compute fitness for the given class and manager id
      *
-     * @param class_name the name of the class storing individual
      * @param mgr_id the population manager id from which the individual is
      * originated
+     * @param class_name the name of the class storing individual
      * @return individual's fitness
      * @throws IllegalStateException some illegal state
      * @throws IllegalArgumentException an illegal argument value
@@ -98,7 +98,7 @@ public abstract class FitnessComputerClass extends FitnessComputerString {
      * (should not be happening)
      */
     public abstract Fitness compute_fitness(
-            final String class_name, final int mgr_id)
+            final int mgr_id, final String class_name)
             throws IllegalStateException, IllegalArgumentException,
             ClassNotFoundException, IllegalAccessException,
             InvocationTargetException;

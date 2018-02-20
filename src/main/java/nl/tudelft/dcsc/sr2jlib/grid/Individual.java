@@ -21,12 +21,12 @@
  */
 package nl.tudelft.dcsc.sr2jlib.grid;
 
-import nl.tudelft.dcsc.sr2jlib.fitness.FitnessComputerExpression;
 import nl.tudelft.dcsc.sr2jlib.fitness.Fitness;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
+import nl.tudelft.dcsc.sr2jlib.fitness.FitnessManager;
 import nl.tudelft.dcsc.sr2jlib.grammar.Grammar;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
 
@@ -233,7 +233,7 @@ public class Individual {
      */
     private void compute_fitness() {
         //Try compiling and computing fitness
-        m_fitness = FitnessComputerExpression.inst().compute_fitness(m_exps, m_mgr_id);
+        m_fitness = FitnessManager.inst().compute_fitness(m_mgr_id, m_exps);
 
         if (m_fitness == null) {
             LOGGER.log(Level.SEVERE, "Failed computing fitness!");
@@ -262,7 +262,7 @@ public class Individual {
     /**
      *
      * Compares two individuals based on their fitness
-     * 
+     *
      * @param other the other individual to compare with
      * @return true if the fitness of both individuals are equal
      */
