@@ -48,7 +48,7 @@ public class ProcessManager {
     private long m_num_reps;
     private final long m_max_num_reps;
     private final ExecutorService m_executor;
-    private final BreedingManager m_grid;
+    private final BreedingManager m_breeder;
     private final double m_init_pop_mult;
 
     /**
@@ -62,7 +62,7 @@ public class ProcessManager {
         this.m_init_pop_mult = conf.m_init_pop_mult;
         this.m_num_workers = conf.m_num_workers;
         this.m_max_num_reps = conf.m_max_num_reps;
-        this.m_grid = new BreedingManager(m_observer, conf);
+        this.m_breeder = new BreedingManager(m_observer, conf);
 
         this.m_num_reps = 0;
 
@@ -95,7 +95,7 @@ public class ProcessManager {
 
         GpWorkerTask(final int idx) {
             super();
-            LOGGER.log(Level.INFO, "Worker {0} created!", idx);
+            LOGGER.log(Level.FINE, "Worker {0} created!", idx);
         }
 
         @Override
@@ -105,30 +105,30 @@ public class ProcessManager {
             final List<Individual> inds = new ArrayList();
             try {
                 //Generate initial population
-                m_grid.generate_initial(m_init_pop_mult / m_num_workers);
+                m_breeder.generate_initial(m_init_pop_mult / m_num_workers);
                 //Go on with reproduction
                 Individual locked_ind = null;
                 while (is_can_reproduce()) {
                     try {
                         //First get a new individual
-                        locked_ind = m_grid.aquire_individual();
+                        locked_ind = m_breeder.aquire_individual();
                         //Check if we can reproduce
                         if ((locked_ind != null) && is_reproduction_allowed()) {
                             //Reproduce individual
-                            m_grid.reproduce_individual(locked_ind, inds);
+                            m_breeder.reproduce_individual(locked_ind, inds);
                         }
                     } catch (Throwable ex) {
                         LOGGER.log(Level.SEVERE, "Exception in a GP worker!", ex);
                     } finally {
                         //Unlock the individual
-                        m_grid.release_individual(locked_ind);
+                        m_breeder.release_individual(locked_ind);
                     }
                 }
             } catch (Throwable ex) {
                 LOGGER.log(Level.SEVERE, "Exception in a GP worker, premature finish!", ex);
             }
 
-            LOGGER.log(Level.INFO, "{0} -> Thread finished!", Thread.currentThread().getName());
+            LOGGER.log(Level.FINE, "{0} -> Thread finished!", Thread.currentThread().getName());
 
             //Notify that the thread is stopped
             notify_worker_finished();
@@ -217,5 +217,15 @@ public class ProcessManager {
         if (m_num_workers == 0) {
             this.stop(true);
         }
+    }
+
+    /**
+     * Allows to filter out the individuals using the individual evaluator. In
+     * order to do so a separate thread is used so this method is non-blocking.
+     *
+     * @param eval the individual evaluator
+     */
+    public void filter_individuals(final IndividualFilter eval) {
+        m_breeder.filter_individuals(eval);
     }
 }

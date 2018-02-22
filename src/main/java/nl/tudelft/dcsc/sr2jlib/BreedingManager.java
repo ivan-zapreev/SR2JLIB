@@ -123,6 +123,34 @@ public class BreedingManager {
     }
 
     /**
+     * Allows to filter out the individuals using the individual evaluator
+     *
+     * @param eval the individual evaluator
+     */
+    public void filter_individuals(final IndividualFilter eval) {
+        //Request the area locker to be paused
+        m_locker.pause();
+        if (m_locker.wait_paused(1000)) {
+            synchronized (m_pop_list) {
+                //Find all the individuals to be removed
+                final LinkedList<Individual> to_remove = new LinkedList();
+                m_pop_list.forEach((ind) -> {
+                    if (eval.evaluate(ind)) {
+                        to_remove.add(ind);
+                    }
+                });
+                //Remove those individuals
+                to_remove.forEach((ind) -> {
+                    kill_individual(ind);
+                });
+            }
+        } else {
+            LOGGER.severe("The are locker could not be paused, filtering is skipped!");
+        }
+        m_locker.resume();
+    }
+
+    /**
      * Attempts to set a new individual in place of an old one
      *
      * @param pos_x x position of the individual
@@ -266,12 +294,13 @@ public class BreedingManager {
     public void reproduce_individual(final Individual parent_ind, final List<Individual> new_inds) {
         final AreaLocker.Area area = m_locker.get_area(parent_ind);
         final int area_size = area.get_area_size();
+
         if (m_is_allow_dying && parent_ind.is_has_to_die()) {
             kill_individual(parent_ind);
         } else {
             parent_ind.reproduce(area_size, new_inds);
 
-            LOGGER.log(Level.FINE, "{0} -> Parent {1} got {2} hildren",
+            LOGGER.log(Level.FINE, "{0} -> Parent {1} got {2} children",
                     new Object[]{Thread.currentThread().getName(),
                         parent_ind, new_inds.size()});
 

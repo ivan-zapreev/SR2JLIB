@@ -33,7 +33,7 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
 public abstract class FitnessComputerString extends FitnessComputerExpression {
 
     @Override
-    public Fitness compute_fitness(
+    public final Fitness compute_fitness(
             final int mgr_id, final Expression[] exp_trees) {
         //Get the array of serialized expressions
         final String exp_strs[] = new String[exp_trees.length];

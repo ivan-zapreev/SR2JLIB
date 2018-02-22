@@ -51,7 +51,9 @@ public class AreaLocker {
 
         /**
          * The basic constructor
-         * @param ind the individual holding a grid cell being a center point of the area
+         *
+         * @param ind the individual holding a grid cell being a center point of
+         * the area
          */
         Area(final Individual ind) {
             m_min_x = Math.max(0, ind.get_pos_x() - m_ch_sp_x);
@@ -95,6 +97,7 @@ public class AreaLocker {
     private final int m_max_y;
     private final int m_ch_sp_x;
     private final int m_ch_sp_y;
+    private boolean m_is_paused;
 
     /**
      * The area locker constructor
@@ -107,6 +110,7 @@ public class AreaLocker {
         m_max_y = conf.m_size_y - 1;
         m_ch_sp_x = conf.m_ch_sp_x;
         m_ch_sp_y = conf.m_ch_sp_y;
+        m_is_paused = false;
     }
 
     /**
@@ -118,23 +122,69 @@ public class AreaLocker {
     public Individual lock_area(final Individual ind) {
         if (ind != null) {
             synchronized (m_mut_set) {
-                //Count the number of overlaps in the stream
-                final Optional<Individual> opt = m_mut_set.stream().filter(elem -> ((Math.abs(elem.get_pos_x() - ind.get_pos_x()) <= 2 * m_ch_sp_x)
-                        && (Math.abs(elem.get_pos_y() - ind.get_pos_y()) <= 2 * m_ch_sp_y))).findFirst();
-                //If the number of overlaps is zero then allow to lock, otherwise not
-                if (opt.isPresent()) {
-                    LOGGER.log(Level.FINE, "{0} -> Failed to lock individual {1}",
-                            new Object[]{Thread.currentThread().getName(), ind});
-                    return null;
+                if (!m_is_paused) {
+                    //Count the number of overlaps in the stream
+                    final Optional<Individual> opt = m_mut_set.stream().filter(elem -> ((Math.abs(elem.get_pos_x() - ind.get_pos_x()) <= 2 * m_ch_sp_x)
+                            && (Math.abs(elem.get_pos_y() - ind.get_pos_y()) <= 2 * m_ch_sp_y))).findFirst();
+                    //If the number of overlaps is zero then allow to lock, otherwise not
+                    if (opt.isPresent()) {
+                        LOGGER.log(Level.FINE, "{0} -> Failed to lock individual {1}",
+                                new Object[]{Thread.currentThread().getName(), ind});
+                        return null;
+                    } else {
+                        m_mut_set.add(ind);
+                        LOGGER.log(Level.FINE, "Locked Individual {0} size: {1}",
+                                new Object[]{ind, m_mut_set.size()});
+                        return ind;
+                    }
                 } else {
-                    m_mut_set.add(ind);
-                    LOGGER.log(Level.FINE, "{0} -> Locked individual {1}",
-                            new Object[]{Thread.currentThread().getName(), ind});
-                    return ind;
+                    return null;
                 }
             }
         } else {
             return null;
+        }
+    }
+
+    /**
+     * Allows to request pausing of the are locker.
+     */
+    public void pause() {
+        synchronized (m_mut_set) {
+            m_is_paused = true;
+        }
+    }
+
+    /**
+     * Waits until all of the locked areas are released, must only be invoked
+     * after the pause is requested.
+     *
+     * @param timeout the timeout in milliseconds to wake up during waiting
+     * @return true if the area locker is paused, otherwise false
+     */
+    public boolean wait_paused(final long timeout) {
+        while (m_is_paused) {
+            try {
+                synchronized (m_mut_set) {
+                    if (m_mut_set.isEmpty()) {
+                        return true;
+                    } else {
+                        m_mut_set.wait(timeout);
+                    }
+                }
+            } catch (InterruptedException ex) {
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Allows to resume the paused action locker
+     */
+    public void resume() {
+        synchronized (m_mut_set) {
+            m_is_paused = false;
+            m_mut_set.notifyAll();
         }
     }
 
@@ -146,8 +196,11 @@ public class AreaLocker {
     public void unlock_area(final Individual ind) {
         synchronized (m_mut_set) {
             m_mut_set.remove(ind);
-            LOGGER.log(Level.FINE, "{0} -> Unlocked Individual {1}",
-                    new Object[]{Thread.currentThread().getName(), ind});
+            LOGGER.log(Level.FINE, "Unlocked Individual {0} size: {1}",
+                    new Object[]{ind, m_mut_set.size()});
+            if (m_mut_set.isEmpty()) {
+                m_mut_set.notifyAll();
+            }
         }
     }
 

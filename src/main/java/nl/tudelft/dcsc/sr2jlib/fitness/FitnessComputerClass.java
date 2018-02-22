@@ -55,7 +55,7 @@ public abstract class FitnessComputerClass extends FitnessComputerString {
     }
 
     @Override
-    public Fitness compute_fitness(
+    public final Fitness compute_fitness(
             final int mgr_id, final String[] exp_strs) {
         Fitness ftn = null;
         //Acquire the uid for a unique individual class name

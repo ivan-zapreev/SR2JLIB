@@ -2,51 +2,55 @@
 
 **SR2JLIB** is a Netbeans project supplying a Java library for grammar-guided *Symbolic Regression* (**SR**) [Koza93], powered by *Genetic Programming* (**GP**) [Koz94, WHM+97], and more specifically *Grammar-Guided Genetic Programming* (**GGGP**) [GCA+08].
 
-The approach realized in this library differs from standard GP in that the population is placed on a 2D grid. The latter defines habitat for the individuals which are reproducing in parallel and thus there is no notion of staging. The reproduction process is ensured by multiple parallel threads randomly choosing individuals from the current population and allowing them to reproduce trying to settle in the pre-defined neighborhood of their ancestor. Each time a new individual is created it is attempted to be placed in the neighboring cells based on tournament or probabilistic tournament selection. 
+The approach realized in this library differs from standard GP in that the population is placed on a 2D grid. The latter defines a habitat for the individuals which are reproducing in parallel and thus there is no notion of staging. The reproduction process is ensured by multiple parallel threads randomly choosing individuals from the current population and allowing them to reproduce trying to settle the offsprings in the pre-defined neighborhood of their ancestors. Each time a new individual is created it is attempted to be placed in the neighboring cells based on tournament or probabilistic tournament selection. 
 
-It is important to note that one can also limit the life-time of an individual. This is done by defining the minimum and maximum number of reproductions, which are eventually influenced by individual's fitness. 
+It is important to note that one can also limit the life-time of an individual. This is done by defining the minimum and maximum number of reproductions. The actual number of reproductions is then chosen based on the individual's fitness but within the pre-specified bounds. 
 
-The realized GP procedure allows to fit (multi-dimensional) vector functions to data. SR can be done for vector function sub-components simultaneously or in parallel. The functions allowed by the library are arbitrary Java numeric expressions and allow using conditional operator:
+The realized GP procedure allows to fit (multi-dimensional) vector functions to data. SR can be done for vector function sub-components simultaneously or in parallel. The functions allowed by the library are arbitrary Java numeric expressions and allow using conditional expressions of the form:
 
 ```
  <boolean expression> ? <numeric expression> : <numeric expression>
 ```
  
-Moreover, numeric expressions allow for using any of the `java.lang.Math` class function primitives. Our strong believe is that cross over operation when breeding function mostly makes little sense. Therefore the only genetic operations supported are mutations which can be of two types:
+Moreover, numeric expressions allow for using any of the java.lang.Math class function primitives. Our strong believe is that cross over operation when breeding function mostly makes little sense. Therefore, the only genetic operations supported are mutations which can be of the next two types:
  
- 1. Mutating an existing expression into a complete new expression
- 2. Mutating the given function into another function with the same arity and keeping the function arguments as is.
+ 1. Mutating an existing expression into a completely new one of the same type;
+ 2. Mutating the given function into another function with the same arity and with the same arguments;
 
-Another feature of the library is that it allows for *Just In Time* compilation (**JIT**) of the individuals in a form java classes and dynamic loading thereof into **JVM**. The latter allows one to easily compute fitness from Java code using the library or use *Java Native Interface* (**JNI**) in order to compute fitness from, e.g., C or C++ code.
+Another feature of the library is that it allows for *Just In Time* compilation (**JIT**) of the individuals in a form java classes and dynamic loading thereof into **JVM**. The latter is done seamlessly for the library's user and allows one to compute individual's fitness from Java code or using *Java Native Interface* (**JNI**) in order to compute fitness from, e.g., C or C++ code.
 
-Last but bit least is that the grammar provided for building expressions is probabilistic, each grammatical expression can be given a weight that defines its likelihood to be chosen when choosing expressions of the given type at random.
+Last but not least, is that the grammar provided for building expressions is probabilistic, each grammatical expression can be given a weight that defines its likelihood to be taken when choosing between expressions of the same type.
 
 #Using software
 
 Using software requires Netbeans IDE 8.2 or later and JDK v1.8 or later.
-Example projects of using the library are provided by:
+Sample projects using the library are provided by:
 
 1. <https://github.com/ivan-zapreev/SR2JLIB_EX>
 2. <https://github.com/ivan-zapreev/SCOTS2SR>
 
-The former is a Java-only project giving a basic example of how the library can be used, it contains multiple comments and is self-explanatory. The latter is a more involved JNI based project for symbolic fitting of SCOTSv2.0 <https://gitlab.lrz.de/matthias/SCOTSv0.2> BDD controllers [Run16]. We also suggest taking a thorough look at the Java Doc of the library stores in the `./api/` folder of the project.
+The former is a Java-only project giving a basic example of how the library can be used, it contains multiple comments and is self-explanatory. The latter is a more involved **JNI** based project for symbolic fitting of SCOTSv2.0 <https://gitlab.lrz.de/matthias/SCOTSv0.2> BDD controllers [Run16]. We also suggest taking a thorough look at the Java Doc of the library stored in the `./api/` folder of the project.
 
-It is a known issue with the the java8 JIT compiler that its caches can become full thus preventing further individuals compilation and thus proper functioning of the library. Therefore, in case a JIT compilation is to be used, see the section on library interfaces further in the text, we suggest supplying java with the following command line arguments:
+It is a known issue with the Java 8 **JIT** compiler that its caches can become full thus preventing further individuals' compilation and potentially preventing the library to function properly. Therefore, in case a JIT compilation is to be used, see the section on library interfaces further in the text, we suggest supplying java with the following command line arguments:
 
 ```
 -XX:InitialCodeCacheSize=1024m
 -XX:ReservedCodeCacheSize=2048m 
 -XX:+UseCodeCacheFlushing
 ```
-These are to be provided to java in the application, which uses **SR2JLIB**. If needed, the cache sizes can be increased even further.
+These are to be provided as `java` command line parameters of the application using **SR2JLIB**. If needed, the cache sizes can be increased even further.
 
 #Main concepts
 
-This section introduces the main concepts of the library.
+This section explains how the library can be used by specifying:
+
+1. The way the grammars are to be specified;
+2. The library interfaces to be used;
+3. The observers and listeners to be implemented;
 
 ##Grammar
 
-The `grammar` is defined as a set of new-line-separated grammar entries:
+The `grammar` is needed to define valid numeric and boolean expressions to be used as vector function components. It is defined as a set of new-line-separated grammar entries:
 
 ```
 <grammar> := <entry> | <grammar> \n <entry>
@@ -67,16 +71,16 @@ V - variable
 D - double constant
 ```
 
-Note that, `L`, `V`, and `D` are build in and `R` with `B` are to be specified by the user. The latter (`B`) only requires specification if boolean expressions are used. Specifying `R` is compulsory as any genetically breed function will be of type `R`.
+Note that, `L`, `V`, and `D` are build-in and R with B are to be specified by the user. Boolean expressions (`B`) only require specification if are implicitly or explicitly used to define `R`. Specifying `R` is compulsory, as any genetically breed function will be of type `R`.
 
-Each `expression` is defined by a function, its argument types and an optional `weight` - a positive double defining the probability distribution over expressions of the same type (if omitted the default value is 1.0):
+Each `expression` is defined by: : *(i)* a function (some numeric/boolean expression); *(ii)* its argument types; *(iii)* an optional `weight` - a positive double defining the probability distribution over expressions of the same type (if omitted the default value is 1.0):
 
 ```
 	<expression> := [<function>](<types>) |
 	                [<function>](<types>)@<weight>
 ```
 
-Here `function` is a valid java expression (boolean or numerical depending on the context) which uses parameters named `x` followed by indexes starting with `1` (i.e. x1, x2, x3). Function parameters define function arguments and their types are given by `types` entry in the definition above. The latter is a comma-separated list:
+Here `function` is a valid java expression (boolean or numerical depending on the context) which uses parameters named `x` followed by indexes starting with `1` (i.e. x1, x2, x3). Function parameters define function arguments and their types are given by the `types` entry in the definition above. The latter is a comma-separated list:
 
 ```
 	<types> := <type> | <types>, <type>
@@ -125,32 +129,33 @@ tR := [x1 - $floor(x1/$PI)*$PI](R) //domain for tangent
 
 ##Main Interfaces
 
-**SR2JLIB** allows to run multiple SR processes in parallel on separate grids. Each of such processes is encapsulated inside an instance of a `nl.tudelft.dcsc.sr2jlib.ProcessManager` class. A single process manager can breed multi-dimensional vector functions. Each of the vector function dimension functions is defined by some grammar. Such a grammar can be individual per dimension or shared with some other dimension within the same or between different instance of `ProcessManager`. A grammar is defined by an instance of the `nl.tudelft.dcsc.sr2jlib.grammar.Grammar` class. Each instance thereof is to be supplied with a configuration object of type `nl.tudelft.dcsc.sr2jlib.grammar.GrammarConfig`. A general pattern for instantiating and setting up grammars is given below:
+**SR2JLIB** allows to run multiple SR processes in parallel on separate grids. Each of such processes is encapsulated inside an instance of a `nl.tudelft.dcsc.sr2jlib.ProcessManager` class. A single process manager can breed multi-dimensional vector functions. Each of the vector function dimension functions is defined by some grammar. Such a grammar can be individual per dimension or shared with some other dimension within the same or between different instances of `ProcessManager`. A grammar is defined by an instance of the `nl.tudelft.dcsc.sr2jlib.grammar.Grammar` class. Each instance thereof is to be supplied with a configuration object of type `nl.tudelft.dcsc.sr2jlib.grammar.GrammarConfig`. A general pattern for instantiating and setting up grammars is given below by means of an example:
 
 ```java
 //Clear any previously registered grammars
 Grammar.clear_grammars();
 
-//Register dof 0 grammar for process managed index 0
+//Register dof 0 grammar for process manager index 0
 final GrammarConfig g_cfg00 = new GrammarConfig(...);
 final Grammar grammar00 = Grammar.create_grammar(g_cfg00);
 Grammar.register_grammar(0, 0, grammar00);
 
-//Register dof 1 grammar for process managed index 0
+//Register dof 1 grammar for process manager index 0
 final GrammarConfig g_cfg01 = new GrammarConfig(...);
 final Grammar grammar01 = Grammar.create_grammar(g_cfg01);
 Grammar.register_grammar(0, 1, grammar01);
 
-//Register dof 0 grammar for process managed index 1
-Grammar.register_grammar(1, 0, grammar00);
+//Register dof 0 grammar for process manager index 1
+//It has the same grammar as dof 1 of process manager 0
+Grammar.register_grammar(1, 0, grammar01);
 
 //Post-process the registered grammars preparing for work
 Grammar.prepare_grammars();
 ```
 
-Here `grammar00` and `grammar01` are used to breed two-dimensional vector functions in an instance of a `ProcessManager` with a unique identifier 0. In addition, `grammar00` is used to breed single-dimensional vector functions in an instance of a `ProcessManager` with a unique identifier 1.
+Here `grammar00` and `grammar01` are used to breed two-dimensional vector functions in an instance of a `ProcessManager` with a unique identifier 0. In addition, `grammar01` is used to breed single-dimensional vector functions in an instance of a `ProcessManager` with a unique identifier 1.
 
-Once the grammars are created and registered one is to instantiate process managers, which are to be configured with instances of the `nl.tudelft.dcsc.sr2jlib.ProcessManagerConfig` class. Then each process manager can be individually started - to begin with symbolic regression; and stopped - to stop the genetic breeding process.
+Once the grammars are instantiated and registered one is to instantiate process managers. These are to be configured with instances of the `nl.tudelft.dcsc.sr2jlib.ProcessManagerConfig` class. Further, each process manager can be individually started - to begin its symbolic regression; and stopped - to stop the genetic breeding process.
 
 ```java
 //Create the configuration object
@@ -163,13 +168,13 @@ manager.start();
 manager.stop(true);
 ```
 
-As one can see all of the `Grammar` and `ProcessManager` class parameters are encapsulated in the corresponding configuration objects. The latter, including the suggested and default values will be discussed in the next section.
+As one can see, all of the `Grammar` and `ProcessManager` class parameters are encapsulated in the corresponding configuration objects. The latter, including the suggested and default values will be discussed in the next section. Also note that, stopping the process manager is typically done once a sufficiently fit individual is found. Doing that, will be discussed in the subsequent section on listeners, observers and computers.
 
 ##Configuration objects
 
 Let us consider the two configuration objects `GrammarConfig` and `ProcessManagerConfig`.
 
-The `GrammarConfig` is used to configure a grammar and has the following constructor:
+The `GrammarConfig` is used for grammar configuration and has the following constructor:
 
 ```java
     /**
@@ -192,7 +197,7 @@ The `GrammarConfig` is used to configure a grammar and has the following constru
             final double max_node_grow, final boolean is_prop_pnodes,
             final int max_gd, final double tm_vs_ntm) {...}
 ```
-Here we suggest the following default values
+Here we suggest the following default values:
 
 ```java
 ch_vs_rep = 0.5;
@@ -201,20 +206,21 @@ max_node_grow = 1.2;
 is_prop_pnodes = false;
 tm_vs_ntm = 0.5;
 ```
-Choosing the value for `max_ts` depends on `grammar` in a sense that a grammar using many `Math` class methods will result in hard-to-compute functions which will impact the performance of fitness computation. In such cases the tree size may be chosen to be smaller than in case of, e.g., a grammar defining polynomials. In general the tree size defines the number of nodes in the tree. Each expression node adds one to the tree size. 
 
-Similarly, `max_gd` (maximum grammar depth) also depends on `grammar`. It should be set to an upper bound of the grammar depth which is defined as the maximum minimum size for each instantiated function in the grammar. In general one can simply set this value to, e.g. 1000 and try setting up the grammar. If the grammar depth turns out to be larger, which is unlikely, then an error will be reported. It is possible however to create a grammars with unbounded maximum grammar depth, such grammars are not supported as they are not feasible, e.g.:
+Choosing the value for `max_ts` depends on a concrete `grammar` in a sense that a grammar using many `Math` class methods will result in hard-to-compute functions which will likely have a negative impact on the performance of fitness computations. In such cases the tree size may be chosen to be smaller than in case of, e.g., a grammar defining polynomials. In general, the tree size defines the number of nodes in the tree. Each expression node adds one to the tree size. 
+
+Similarly, `max_gd` - *maximum grammar depth* (**MGD**) is also `grammar` specific. It should be set to an upper bound of the MGD which is defined as the maximum (over all functions) of minimum (over all function instances) expression sizes. For simplicity, one can simply set `max_gd` to some rather high value to, e.g. 1000, and try setting up the grammar. If the actual MGD turns out to be larger, which is very unlikely, a corresponding error will be reported. Setting the value of `max_gd` ​​​​​​​above the actual MGD does not result in any performance overheads. It is possible however to create a grammars with unbounded MGD, such grammars are not supported as they are not feasible, e.g.:
 
 ```
 R := [x1+x2](R,R)
 ```
 
-To fix this grammar one can simply a terminal expression such as:
+Clearly, `R` is defined recursively but without explicit or implicit use of any terminal expressions. To fix this grammar and make it bounded one needs to simply add a terminal expression, such as:
 
 ```
 R := [x1](D); [x1+x2](R,R)
 ```
-The maximum grammar depth in this case will be 3.
+The maximum grammar depth in this case will be 3 and as a rule of thumb: *"A grammar will have a bounded MGD if each grammar expression can be instantiated as a finite expression tree"*.
 
 
 The `ProcessManagerConfig` is used to configure a process manager and has the following constructor:
@@ -276,7 +282,7 @@ min_chld_cnt = 0;
 max_chld_cnt = 0;
 sel_type = SelectionType.VALUE;
 ```
-The value of `mgr_id` depends on the number of managers, we recommend using manager ids starting from 0. The value of `num_dofs` is problem specific.
+The value of `mgr_id` depends on the number of managers, we recommend using continuous (in the non-negative integer domain) manager ids starting from 0. The value of `num_dofs` is problem specific.
 
 Last but not least `done_cb` and `observer` provide the call-back objects. The former is just an object realizing a functional interface to be called once the process manager has finished the SR procedure. The latter is a grid observing object allowing to monitor all of the population changes. We shall discuss these and other interfaces in the next section. 
 
@@ -285,10 +291,10 @@ Last but not least `done_cb` and `observer` provide the call-back objects. The f
 There are several main interfaces that are to be realized by the application using  **SR2JLIB**, the first three of them are:
 
 1. `nl.tudelft.dcsc.sr2jlib.FinishedCallback` - a functional interface to be used by the `ProcessManager` to notify the user that the SR is finished;
-2. `nl.tudelft.dcsc.sr2jlib.grid.GridObserver` - an interface allowing to monitor when the symbolic regression is started and stopped as well as adding/killing new/old individuals on the grid;
+2. `nl.tudelft.dcsc.sr2jlib.grid.GridObserver` - an interface allowing to monitor the symbolic regression process, i.e.: its start, stop and adding/killing new/old individuals on the grid;
 3. `nl.tudelft.dcsc.sr2jlib.ErrorListener` - an optional error listener to monitor exceptions and errors occurring while SR. For instance, a broken grammar can result in non-compilable individual classes and these exceptions will be reported through an instance of this interface.
 
-Objects of classes implementing `FinishedCallback` and `GridObserver` are provided as arguments for the `ProcessManagerConfig` class constructor. An object implementing `ErrorListener` is to be set explicitly from the code through the
+Objects of classes implementing `FinishedCallback` and `GridObserver` are provided as arguments for the `ProcessManagerConfig` class constructor. An object implementing `ErrorListener` is to be set explicitly from the code through  calling the:
 
 ```java
     /**
@@ -302,20 +308,22 @@ Objects of classes implementing `FinishedCallback` and `GridObserver` are provid
 
 method of the `nl.tudelft.dcsc.sr2jlib.err.ErrorManager` class. 
 
-Other interfaces, at least one of which needs to be implemented, are used for individual's fitness computations. These are given by the abstract classes located in the `nl.tudelft.dcsc.sr2jlib.fitness` package and require implementing their
+It is important to note that since `GridObserver` provides an interface for monitoring the population manager's individuals, it is a custom to check for individuals' fitness in order to stop the corresponding process manager from within this interface implementation.
+
+Other interfaces, at least one of which needs to be implemented, are used for individual's fitness computations. These are given by the abstract classes located in the `nl.tudelft.dcsc.sr2jlib.fitness` package and require implementing their overloaded:
 
 ```java
 public abstract Fitness compute_fitness(final int mgr_id, ...);
 ```
 
-methods. The concrete abstract class to inherit from, and thus the `compute_fitness` method to be implemented, depends on the user preference. We classify them based on what is provided as an argument for the `compute_fitness` method:
+methods. The concrete abstract class to inherit from, and thus the `compute_fitness` method to be implemented, depends on user preferences. We classify them based on what is provided as an argument for the `compute_fitness` method:
 
 1. `FitnessComputerExpression` - the individual's vector function expression trees.
 2. `FitnessComputerString` - the individual's vector function serialized as Java expression strings.
 3. `FitnessComputerClass` - the individual's vector function compiled into a java class.
 4. `FitnessComputerInstance` - the individual's vector function compiled and instantiated as a java object.
 
-In order to set the fitness computer class as the one to be used, one requires using the
+In order to set the fitness computer class as the one to be used, it is required using the:
 
 ```java
     /**
@@ -326,15 +334,15 @@ In order to set the fitness computer class as the one to be used, one requires u
     public static void set_inst(final FitnessComputerExpression inst) {...}
 ```
 
-method of the `FitnessManager` class;
+method of the `FitnessManager` class.
 
 ##Expression trees
 
-Each individual's vector function dimension is represented in a form of a Java numeric expression. The latter is initially stored in a form of a tree where non-terminal nodes correspond to operations and function and terminal nodes correspond to numerical or boolean constants, or free variables. The classes used to form expression trees are stored in the `nl.tudelft.dcsc.sr2jlib.grammar.expr` package. Each tree node is an instance of the `Expression` class. Non-terminal nodes are instances of the `FunctExpr` class and terminal ones of the `TermExpr` class. The latter has three child classes:
+Each individual's vector function dimension is represented in a form of a Java numeric expression. The latter is initially stored in a form of a tree where non-terminal nodes correspond to functions (numeric or boolean expressions) and terminal nodes correspond to numerical or boolean constants, or free variables. The classes used to form expression trees are stored in the `nl.tudelft.dcsc.sr2jlib.grammar.expr` package. Each tree node is an instance of the `Expression` class. Non-terminal nodes are instances of the `FunctExpr` class and terminal ones of the `TermExpr` class. The latter has three child classes:
 
 1. `BConstExpr` - a boolean constant expression
 2. `NConstExpr` - a numerical constant expression
-3. `VarExpr` - a free variable expression
+3. `VarExpr` - a double free variable expression
 
 All of these have interface functions in order to traverse through the expression tree and get information of each of its nodes. For more detail consider reading the Java Doc.
 
