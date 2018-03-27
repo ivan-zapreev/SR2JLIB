@@ -91,4 +91,9 @@ public class VarExpr extends TermExpr<Integer> {
     public boolean is_equal_funct(Expression expr) {
         return (expr instanceof VarExpr);
     }
+
+    @Override
+    public String to_text() {
+        return "x"+m_value;
+    }
 }

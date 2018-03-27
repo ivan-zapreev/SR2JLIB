@@ -171,6 +171,15 @@ public class ProcessManager {
     }
 
     /**
+     * Allows to get the best fit individuals.
+     *
+     * @return the best fit individuals
+     */
+    public List<Individual> get_best_fit_ind() {
+        return m_observer.get_best_fit_ind();
+    }
+
+    /**
      * Starts the GP procedure
      */
     public void start() {

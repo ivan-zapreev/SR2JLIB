@@ -131,12 +131,17 @@ public abstract class TermExpr<ValueType> extends Expression {
     }
 
     @Override
-    public boolean is_terminal() {
+    final protected boolean is_terminal() {
         return true;
     }
 
     @Override
-    public boolean is_placement() {
+    final public boolean is_placement() {
+        return false;
+    }
+
+    @Override
+    final public boolean is_b_placement() {
         return false;
     }
 }

@@ -176,7 +176,7 @@ public abstract class Expression {
      *
      * @return true if the node is terminal
      */
-    public abstract boolean is_terminal();
+    protected abstract boolean is_terminal();
 
     /**
      * Allows to check if the node is a placement one. I.e. it puts one type
@@ -187,6 +187,14 @@ public abstract class Expression {
     public abstract boolean is_placement();
 
     /**
+     * Allows to check if the node is a basic placement one. I.e. it
+     * puts a basic terminal type into another one via a functional.
+     *
+     * @return true if the node is a basic placement node
+     */
+    public abstract boolean is_b_placement();
+
+    /**
      * Allows to change the expression type to the given one, is needed for
      * propagation
      *
@@ -195,4 +203,11 @@ public abstract class Expression {
     public void change_expr_type(final String expr_type) {
         m_expr_type = expr_type;
     }
+
+    /**
+     * Allows to get a textual representation of the given expression
+     *
+     * @return a textual representation of the given expression
+     */
+    public abstract String to_text();
 }

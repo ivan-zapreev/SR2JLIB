@@ -77,4 +77,9 @@ public class BConstExpr extends TermExpr<Boolean> {
     public boolean is_equal_funct(Expression expr) {
         return (expr instanceof BConstExpr);
     }
+
+    @Override
+    public String to_text() {
+        return Boolean.toString(m_value);
+    }
 }

@@ -338,7 +338,7 @@ class FunctGrammarEntry implements GrammarEntry {
             final Double weight = m_weight.get(idx);
             LOGGER.log(Level.FINE, "Got funciton: {0} of weight: {1}",
                     new Object[]{func, weight});
-            if (func.is_placement()) {
+            if (func.is_placement() && !func.is_b_placement()) {
                 final String plc_type = func.get_signature();
                 final GrammarEntry entry = entries.get(plc_type);
                 LOGGER.log(Level.FINE, "The placement signature type is: {0}",

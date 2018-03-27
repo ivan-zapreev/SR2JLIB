@@ -21,6 +21,8 @@
  */
 package nl.tudelft.dcsc.sr2jlib.grid;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import nl.tudelft.dcsc.sr2jlib.fitness.Fitness;
 import java.util.List;
 import java.util.logging.Level;
@@ -215,6 +217,19 @@ public class Individual {
     }
 
     /**
+     * Allows to get expressions representing this individual
+     *
+     * @return copies of expressions representing this individual
+     */
+    public List<Expression> get_expr() {
+        List<Expression> result = new ArrayList();
+        for (int idx = 0; idx < m_exps.length; ++idx) {
+            result.add(m_exps[idx].duplicate());
+        }
+        return result;
+    }
+
+    /**
      * Get the individual's size
      *
      * @return the size of the individual
@@ -268,5 +283,17 @@ public class Individual {
      */
     public boolean equals(final Individual other) {
         return this.m_fitness.equals(other.m_fitness);
+    }
+
+    /**
+     *
+     * Compares two individuals based on their fitness
+     *
+     * @param other the other individual to compare with
+     * @return true if the fitness of this individual is smaller than the
+     * fitness of the other one
+     */
+    public boolean is_less(final Individual other) {
+        return this.m_fitness.is_less(other.m_fitness);
     }
 }

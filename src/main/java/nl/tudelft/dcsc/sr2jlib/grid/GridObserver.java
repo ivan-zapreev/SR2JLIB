@@ -21,6 +21,8 @@
  */
 package nl.tudelft.dcsc.sr2jlib.grid;
 
+import java.util.List;
+
 /**
  * The standard interface to observe the population manager
  *
@@ -34,18 +36,27 @@ public interface GridObserver {
     public void start_observing();
 
     /**
-     * Will be called once a new individual becomes a population part.
-     * Note that, there could have been another individual in the position
-     * of this one, then that one is to be considered as deleted.
+     * Will be called once a new individual becomes a population part. Note
+     * that, there could have been another individual in the position of this
+     * one, then that one is to be considered as deleted.
+     *
      * @param ind the individual to be set into the grid.
      */
     public void add_individual(final Individual ind);
 
     /**
      * Will be called if an individual is to be removed from the population.
+     *
      * @param ind an individual to be removed
      */
     public void kill_individual(final Individual ind);
+
+    /**
+     * Allows to get the best fit individuals.
+     *
+     * @return the best fit individuals
+     */
+    public List<Individual> get_best_fit_ind();
 
     /**
      * Is called when the observation is to be stopped

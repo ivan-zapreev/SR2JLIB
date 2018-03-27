@@ -77,4 +77,9 @@ public class NConstExpr extends TermExpr<Double> {
     public boolean is_equal_funct(Expression expr) {
         return (expr instanceof NConstExpr);
     }
+
+    @Override
+    public String to_text() {
+        return Double.toString(m_value);
+    }
 }

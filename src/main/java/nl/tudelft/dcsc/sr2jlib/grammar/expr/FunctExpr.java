@@ -49,6 +49,8 @@ public class FunctExpr extends Expression {
     private static final char OPEN_SIGN_CHAR = '(';
     private static final char CLOSE_SIGN_CHAR = ')';
     private static final int NODE_SIZE_1 = 1;
+    private static final int FIRST_VAR_IDX = 1;
+    private static final String FIRST_VAR_NAM_STR = VAR_NAME_PREF_STR + FIRST_VAR_IDX;
 
     //Stores the grammar provider
     private final GrammarProvider m_provider;
@@ -66,8 +68,10 @@ public class FunctExpr extends Expression {
     private int m_min_size;
     //Stores the maximum node size
     private int m_max_size;
-    //Stors the flag indicating if the node is terminal
-    private boolean m_is_terminal;
+    //Stores the flag inditing if this node is a placement node
+    private final boolean m_is_plc;
+    //Stores the flag inditing if this node is a basic placement node
+    private final boolean m_is_b_plc;
     //Stores the node size;
     private int m_node_size;
 
@@ -95,7 +99,7 @@ public class FunctExpr extends Expression {
         this.m_sign = strip(desc.substring(ss_idx + 1, se_idx));
         this.m_min_size = 0;
         this.m_max_size = 0;
-        this.m_is_terminal = false;
+
         this.m_node_size = 0;
 
         if (m_sign.isEmpty()) {
@@ -120,6 +124,12 @@ public class FunctExpr extends Expression {
 
         LOGGER.log(Level.FINE, "Parses the function: {0} -> [{1}]({2})",
                 new Object[]{desc, m_func, m_sign});
+
+        m_is_plc = m_func.equals(FIRST_VAR_NAM_STR);
+        m_is_b_plc = m_is_plc
+                && (m_sign.equals(VarExpr.ENTRY_VAR_STR)
+                || m_sign.equals(BConstExpr.ENTRY_CBOOL_STR)
+                || m_sign.equals(NConstExpr.ENTRY_CNUM_STR));
     }
 
     @Override
@@ -206,7 +216,8 @@ public class FunctExpr extends Expression {
         this.m_min_size = other.m_min_size;
         this.m_max_size = other.m_max_size;
         this.m_arg_occ = other.m_arg_occ;
-        this.m_is_terminal = other.m_is_terminal;
+        this.m_is_plc = other.m_is_plc;
+        this.m_is_b_plc = other.m_is_b_plc;
         this.m_unb_cnt = other.m_unb_cnt;
         this.m_fin_sum_max = other.m_fin_sum_max;
         this.m_fin_max = other.m_fin_max;
@@ -415,8 +426,6 @@ public class FunctExpr extends Expression {
             //Add the expression into the list of children
             m_child.add(exp);
         }
-        //Define if the node is terminal
-        m_is_terminal = (is_placement() && (m_child.get(0).is_terminal()));
     }
 
     /**
@@ -468,7 +477,7 @@ public class FunctExpr extends Expression {
     @Override
     public String serialize() {
         String func = m_func;
-        int idx = 1;
+        int idx = FIRST_VAR_IDX;
         for (Expression child : m_child) {
             final String child_str = child.serialize();
             final String var_str = VAR_NAME_PREF_STR + idx;
@@ -476,7 +485,7 @@ public class FunctExpr extends Expression {
             func = func.replaceAll(bc(var_str), bc(child_str));
             func = func.replaceAll(cc(var_str), cc(child_str));
             func = func.replaceAll(cb(var_str), cb(child_str));
-            if (child.is_terminal()) {
+            if (child.is_terminal() || child.is_placement()) {
                 func = func.replaceAll(var_str, child_str);
             } else {
                 func = func.replaceAll(var_str, bb(child_str));
@@ -500,18 +509,34 @@ public class FunctExpr extends Expression {
     }
 
     @Override
-    public boolean is_terminal() {
-        return m_is_terminal;
+    final protected boolean is_terminal() {
+        return false;
     }
 
     @Override
     public boolean is_placement() {
-        //DO NOT MAKE PLACEMENTS from terminal types!
-        //This will cause biased individuals when materializing.
-        //As the node size [-x1](D) or [1/x1](D) will be 2 and [x](D) will be one!
-        return m_func.equals(VAR_NAME_PREF_STR + 1)
-                && !m_sign.equals(VarExpr.ENTRY_VAR_STR)
-                && !m_sign.equals(BConstExpr.ENTRY_CBOOL_STR)
-                && !m_sign.equals(NConstExpr.ENTRY_CNUM_STR);
+        return m_is_plc;
+    }
+
+    @Override
+    public boolean is_b_placement() {
+        return m_is_b_plc;
+    }
+
+    @Override
+    public String to_text() {
+        String func = m_func.replaceAll(MATH_PREFIX_STR, "");
+        int idx = FIRST_VAR_IDX;
+        for (Expression child : m_child) {
+            final String child_str = child.to_text();
+            final String var_str = VAR_NAME_PREF_STR + idx;
+            if (child.is_terminal() || child.is_placement()) {
+                func = func.replaceAll(var_str, child_str);
+            } else {
+                func = func.replaceAll(var_str, bb(child_str));
+            }
+            ++idx;
+        }
+        return func;
     }
 }
