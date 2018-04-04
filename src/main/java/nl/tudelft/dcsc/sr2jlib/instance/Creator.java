@@ -48,6 +48,15 @@ public class Creator {
      * The name of the array argument used by the individual dof functions
      */
     public static final String VAR_NAME = "args";
+    
+    /**
+     * Allows to get the variable name for the variable with the given index.
+     * @param idx the variable index name
+     * @return the variable name
+     */
+    public static final String get_var_name(final int idx) {
+        return Creator.VAR_NAME + "\\[" + idx + "\\]";
+    }
 
     /**
      * The name of the function for getting the individual's vector function

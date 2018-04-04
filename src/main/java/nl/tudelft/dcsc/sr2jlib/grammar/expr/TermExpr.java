@@ -144,4 +144,9 @@ public abstract class TermExpr<ValueType> extends Expression {
     final public boolean is_b_placement() {
         return false;
     }
+
+    @Override
+    public String get_signature() {
+        return "";
+    }
 }

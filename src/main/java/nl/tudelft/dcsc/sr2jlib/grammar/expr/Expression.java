@@ -140,6 +140,14 @@ public abstract class Expression {
     public abstract int get_max_size();
 
     /**
+     * Allows to get a signature of the expression
+     *
+     * @return the expression's signature
+     * @throws UnsupportedOperationException in case the method is nod supported
+     */
+    public abstract String get_signature();
+
+    /**
      * Creates a clone of the expression
      *
      * @return a copy of the expression

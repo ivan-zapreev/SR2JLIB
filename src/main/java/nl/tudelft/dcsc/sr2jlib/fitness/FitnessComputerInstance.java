@@ -47,7 +47,7 @@ public abstract class FitnessComputerInstance extends FitnessComputerClass {
             throws IllegalStateException, IllegalArgumentException,
             ClassNotFoundException, IllegalAccessException,
             InvocationTargetException {
-        LOGGER.log(Level.INFO, "About to compute fitness for class {0}", class_name);
+        LOGGER.log(Level.FINE, "About to compute fitness for class {0}", class_name);
         try {
             Class<?> ind_class = m_loader.loadClassNC(class_name.replaceAll("/", "."));
             Method gnd_method = ind_class.getMethod(Creator.GET_NUM_DOFS);
@@ -68,11 +68,13 @@ public abstract class FitnessComputerInstance extends FitnessComputerClass {
 
     /**
      *
-     * Allows to compute fitness for the given individual vector function methods and manager id
+     * Allows to compute fitness for the given individual vector function
+     * methods and manager id
      *
      * @param mgr_id the population manager id from which the individual is
      * originated
-     * @param vf an array of individual class methods representing the vector function
+     * @param vf an array of individual class methods representing the vector
+     * function
      * @return individual's fitness
      * @throws IllegalStateException some illegal state
      * @throws IllegalArgumentException an illegal argument value

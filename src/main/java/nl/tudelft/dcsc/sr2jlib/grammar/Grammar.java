@@ -52,8 +52,8 @@ public class Grammar implements GrammarProvider {
     private static final String COMMENT_STR = "//";
     private static final String COMMENT_REG = "//.*$";
 
-    private static final String ENTRY_BOOL_STR = "B";
-    private static final String ENTRY_NUM_STR = "R";
+    private static final String BOOL_ENTRY_TYPE_STR = "B";
+    private static final String NUM_ENTRY_TYPE_STR = "R";
 
     //Stores the manager to dof index to grammar mappints
     private static final Map<Integer, Map<Integer, Grammar>> MGR_GRAMMS = new HashMap();
@@ -233,12 +233,17 @@ public class Grammar implements GrammarProvider {
      * Initializes default entry map elements, for the build-in terminal nodes
      */
     private void initialize_default_entries() {
+        //WARNING: The terminal node type is set to be different from the type
+        //they are registered under! The registration is done using the constant
+        //type name whereas the expression type is set to be the most general
+        //expression type this is done for the sake of being able to replace
+        //the terminal node in the tree with a non-terminal node
         m_entries.put(NConstExpr.ENTRY_CNUM_STR,
-                new DefGrammarEntry(NConstExpr.ENTRY_CNUM_STR, new NConstExpr(ENTRY_NUM_STR)));
+                new DefGrammarEntry(NConstExpr.ENTRY_CNUM_STR, new NConstExpr(NUM_ENTRY_TYPE_STR)));
         m_entries.put(BConstExpr.ENTRY_CBOOL_STR,
-                new DefGrammarEntry(BConstExpr.ENTRY_CBOOL_STR, new BConstExpr(ENTRY_BOOL_STR)));
+                new DefGrammarEntry(BConstExpr.ENTRY_CBOOL_STR, new BConstExpr(BOOL_ENTRY_TYPE_STR)));
         m_entries.put(VarExpr.ENTRY_VAR_STR,
-                new DefGrammarEntry(VarExpr.ENTRY_VAR_STR, new VarExpr(ENTRY_NUM_STR, m_num_vars)));
+                new DefGrammarEntry(VarExpr.ENTRY_VAR_STR, new VarExpr(NUM_ENTRY_TYPE_STR, m_num_vars)));
     }
 
     /**
@@ -343,7 +348,7 @@ public class Grammar implements GrammarProvider {
         initialize_randomizers();
 
         //Compute the tree size bound
-        m_min_tree_size = m_entries.get(ENTRY_NUM_STR).get_min_size();
+        m_min_tree_size = m_entries.get(NUM_ENTRY_TYPE_STR).get_min_size();
         m_tree_size_bound = Math.max(m_min_tree_size, m_max_ts) + 1;
     }
 
@@ -391,8 +396,8 @@ public class Grammar implements GrammarProvider {
         String msg = null;
 
         //Check ENTRY_NUM_STR is present
-        if (!m_entries.containsKey(ENTRY_NUM_STR)) {
-            msg = "The compulsory root node: " + ENTRY_NUM_STR + " is not present!";
+        if (!m_entries.containsKey(NUM_ENTRY_TYPE_STR)) {
+            msg = "The compulsory root node: " + NUM_ENTRY_TYPE_STR + " is not present!";
         }
 
         if (msg != null) {
@@ -404,43 +409,43 @@ public class Grammar implements GrammarProvider {
     /**
      * Mutates the given mutant
      *
-     * @param to_mutate_node the node of the mutant to change with a node of the
-     * same signature
+     * @param tmn the node of the mutant to change with a node of the same
+     * signature
      * @param mutant the mutant to mutate
      * @return the mutated version of the mutant
      */
-    private Expression change(final Expression to_mutate_node, Expression mutant) {
-        if (to_mutate_node instanceof FunctExpr) {
+    private Expression change(final Expression tmn, Expression mutant) {
+        if (tmn instanceof FunctExpr) {
             //Get the expression's signature
-            final String signature = ((FunctExpr) to_mutate_node).get_signature();
+            final String signature = ((FunctExpr) tmn).get_signature();
             //Get an expression with the same signature
             LOGGER.log(Level.FINE, "Exchanging node of type: {0}, signature {1}",
-                    new Object[]{to_mutate_node.get_expr_type(), signature});
+                    new Object[]{tmn.get_expr_type(), signature});
             final Expression exchange_node
-                    = m_entries.get(to_mutate_node.get_expr_type()).choose_expr(signature);
-            if (to_mutate_node.is_equal_funct(exchange_node)) {
+                    = m_entries.get(tmn.get_expr_type()).choose_expr(signature);
+            if (tmn.is_equal_funct(exchange_node)) {
                 //It can happen that we chose the same node king,
                 //then fall back into node replacement
-                mutant = replace(to_mutate_node, mutant);
+                mutant = replace(tmn, mutant);
             } else {
                 LOGGER.log(Level.FINE, "Changing: {0} into {1}",
-                        new Object[]{to_mutate_node, exchange_node});
+                        new Object[]{tmn, exchange_node});
                 //Emplace the new node in place of the old one, the root node is special
-                if (mutant == to_mutate_node) {
+                if (mutant == tmn) {
                     LOGGER.log(Level.FINE, "Emplacing the root node");
                     ((FunctExpr) exchange_node).move_children((FunctExpr) mutant);
                     mutant = exchange_node;
                 } else {
                     LOGGER.log(Level.FINE, "Searching for the child node to emplace");
                     //We replace some node in a tree
-                    mutant.emplace_funct(to_mutate_node, exchange_node);
+                    mutant.emplace_funct(tmn, exchange_node);
                 }
             }
         } else {
             //If we are here then it is a terminal node, i.e. a Variable or a
             //Numeric/boolean constant, the change then boils down to a simple
             //node re-materialization.
-            to_mutate_node.materialize(1);
+            tmn.materialize(1);
         }
 
         return mutant;
@@ -449,15 +454,15 @@ public class Grammar implements GrammarProvider {
     /**
      * Computes the new node size
      *
-     * @param to_mutate_node the node of the mutant to replace with a new tree
+     * @param tmn the node of the mutant to replace with a new tree
      * @param mutant the mutant to mutate
      * @return the new to mutate node size
      */
-    private int compute_new_node_size(final Expression to_mutate_node, Expression mutant) {
+    private int compute_new_node_size(final Expression tmn, Expression mutant) {
         //Get new sub-tree size and random generate a new node
         final int tree_size = mutant.get_size();
         //Do not re-comute size as to_mutate_node is from mutant
-        final int old_node_size = to_mutate_node.get_size(false);
+        final int old_node_size = tmn.get_size(false);
         final int min_size = Math.max(1,
                 (int) Math.floor(old_node_size * m_min_node_grow));
         final int max_size = Math.max(min_size,
@@ -475,36 +480,29 @@ public class Grammar implements GrammarProvider {
     /**
      * Mutates the given mutant
      *
-     * @param to_mutate_node the node of the mutant to replace with a new tree
+     * @param tmn the node of the mutant to replace with a new tree
      * @param mutant the mutant to mutate
      * @return the mutated version of the mutant
      */
-    private Expression replace(final Expression to_mutate_node, Expression mutant) {
-        if (to_mutate_node instanceof TermExpr) {
-            //If this is a terminal node type then just mutate  it and do 
-            //not replace with a functional otherwise we can break the
-            //actual type of the functional where this terminal is used
-            mutant = change(to_mutate_node, mutant);
+    private Expression replace(final Expression tmn, Expression mutant) {
+        final int new_node_size = compute_new_node_size(tmn, mutant);
+        LOGGER.log(Level.FINE, "Replacing node of type: {0}", tmn.get_expr_type());
+        final Expression exchange_node
+                = m_entries.get(tmn.get_expr_type()).choose_expr(new_node_size);
+        LOGGER.log(Level.FINE, "The old/new nodes are: {0}/{1}",
+                new Object[]{tmn, exchange_node});
+        exchange_node.materialize(new_node_size);
+        LOGGER.log(Level.FINE, "The the new node {0} has actual size: {1}",
+                new Object[]{exchange_node.serialize(), exchange_node.get_size()});
+        //Set the new node in place of the old one, the root node is special
+        if (mutant == tmn) {
+            LOGGER.log(Level.FINE, "Replacing the root node");
+            //We change the entire tree
+            mutant = exchange_node;
         } else {
-            final int new_node_size = compute_new_node_size(to_mutate_node, mutant);
-            LOGGER.log(Level.FINE, "Replacing node of type: {0}", to_mutate_node.get_expr_type());
-            final Expression exchange_node
-                    = m_entries.get(to_mutate_node.get_expr_type()).choose_expr(new_node_size);
-            LOGGER.log(Level.FINE, "The old/new nodes are: {0}/{1}",
-                    new Object[]{to_mutate_node, exchange_node});
-            exchange_node.materialize(new_node_size);
-            LOGGER.log(Level.FINE, "The the new node {0} has actual size: {1}",
-                    new Object[]{exchange_node.serialize(), exchange_node.get_size()});
-            //Set the new node in place of the old one, the root node is special
-            if (mutant == to_mutate_node) {
-                LOGGER.log(Level.FINE, "Replacing the root node");
-                //We change the entire tree
-                mutant = exchange_node;
-            } else {
-                LOGGER.log(Level.FINE, "Searching for the child node to replace");
-                //We replace some node in a tree
-                mutant.replace_node(to_mutate_node, exchange_node);
-            }
+            LOGGER.log(Level.FINE, "Searching for the child node to replace");
+            //We replace some node in a tree
+            mutant.replace_node(tmn, exchange_node);
         }
         return mutant;
     }
@@ -520,10 +518,14 @@ public class Grammar implements GrammarProvider {
         final List<Expression> term = new ArrayList();
         mutant.get_nodes(nterm, term);
         //Give a certain chance for terminan v.s. non-temrinal nodes
-        if (ThreadLocalRandom.current().nextFloat() < m_tm_vs_ntm) {
+        if ((ThreadLocalRandom.current().nextFloat() < m_tm_vs_ntm) || nterm.isEmpty()) {
+            LOGGER.log(Level.FINE, "The number of mutant {0} terminal nodes is: {1}",
+                    new Object[]{mutant, term.size()});
             final int idx = ThreadLocalRandom.current().nextInt(term.size());
             return (Expression) term.get(idx);
         } else {
+            LOGGER.log(Level.FINE, "The number of mutant {0} non-terminal nodes is: {1}",
+                    new Object[]{mutant, nterm.size()});
             final int idx = ThreadLocalRandom.current().nextInt(nterm.size());
             return (Expression) nterm.get(idx);
         }
@@ -543,18 +545,20 @@ public class Grammar implements GrammarProvider {
                 new Object[]{mutant.get_size(), mutant.serialize()});
 
         //Pick up a node at random
-        final Expression to_mutate_node = pick_up_node(mutant);
+        final Expression tmn = pick_up_node(mutant);
 
-        LOGGER.log(Level.FINE, "Got node to mutate: {0}", to_mutate_node.serialize());
+        LOGGER.log(Level.FINE, "Got node to mutate: {0}", tmn.serialize());
 
         //Choose change or replace
-        boolean is_change = (ThreadLocalRandom.current().nextDouble() < m_ch_vs_rep);
+        final boolean is_change = (ThreadLocalRandom.current().nextDouble() < m_ch_vs_rep)
+                && ((tmn instanceof TermExpr)
+                || m_entries.get(tmn.get_expr_type()).has_many(tmn.get_signature()));
 
         LOGGER.log(Level.FINE, "Is change : {0}", is_change);
         if (is_change) {
-            mutant = change(to_mutate_node, mutant);
+            mutant = change(tmn, mutant);
         } else {
-            mutant = replace(to_mutate_node, mutant);
+            mutant = replace(tmn, mutant);
         }
 
         LOGGER.log(Level.FINE, "Obtained size: {0} expression: {1}",
@@ -571,7 +575,7 @@ public class Grammar implements GrammarProvider {
         //Generate the maximum tree size to be used
         int max_size = ThreadLocalRandom.current().nextInt(m_min_tree_size, m_tree_size_bound);
         //Get the first numeric node
-        Expression result = choose_expr(ENTRY_NUM_STR, max_size);
+        Expression result = choose_expr(NUM_ENTRY_TYPE_STR, max_size);
         //Populate the rest recursively
         result.materialize(max_size);
         LOGGER.log(Level.FINE, "Requested candidate of size {0}, obtained size {1}",

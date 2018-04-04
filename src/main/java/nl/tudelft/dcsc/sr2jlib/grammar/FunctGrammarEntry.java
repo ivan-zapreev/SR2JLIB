@@ -224,13 +224,15 @@ class FunctGrammarEntry implements GrammarEntry {
             final Expression exp, final double weight) {
         //Ony functional expressions have signatures
         if (exp instanceof FunctExpr) {
-            final FunctExpr fexp = (FunctExpr) exp;
-            Randomizer rnd = rands.get(fexp.get_signature());
+            Randomizer rnd = rands.get(exp.get_signature());
             if (rnd == null) {
                 rnd = new Randomizer();
-                rands.put(fexp.get_signature(), rnd);
+                rands.put(exp.get_signature(), rnd);
             }
             rnd.register(exp, weight);
+        } else {
+            throw new IllegalArgumentException("Trying to add a non-functional "
+                    + "expression " + exp + " into a functional grammarentry!");
         }
     }
 
@@ -261,7 +263,7 @@ class FunctGrammarEntry implements GrammarEntry {
                 new Object[]{m_min_min_size, m_max_fin_size});
         //Propagate expressions based on their minimum and maximum sizes!
 
-        //We shall start from minimum minimum size and go to maximum finite size
+        //We shall start from minimum size and go to maximum finite size
         //and propagate all expressions which have the size index in the min/max range
         //The very last randomizer will be for the remaining sizes between the found
         //finite maximum and infinity, if any
@@ -287,7 +289,7 @@ class FunctGrammarEntry implements GrammarEntry {
                         next.register(exp, ivl.get_weight());
                     }
                 }
-                //Put the randomizer into the map inly if it is not empty
+                //Put the randomizer into the map only if it is not empty
                 if (!next.is_empty()) {
                     m_size2rnds.put(next_idx, next);
                 }
@@ -393,5 +395,11 @@ class FunctGrammarEntry implements GrammarEntry {
     @Override
     public List<Double> get_weights() {
         return m_weight;
+    }
+
+    @Override
+    public boolean has_many(String signature) {
+        final Randomizer rnd = m_sig2rnds.get(signature);
+        return (rnd != null) && (rnd.get_num_ivls() > 1);
     }
 }

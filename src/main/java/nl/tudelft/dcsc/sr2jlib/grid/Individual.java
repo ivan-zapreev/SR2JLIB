@@ -22,7 +22,6 @@
 package nl.tudelft.dcsc.sr2jlib.grid;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import nl.tudelft.dcsc.sr2jlib.fitness.Fitness;
 import java.util.List;
 import java.util.logging.Level;

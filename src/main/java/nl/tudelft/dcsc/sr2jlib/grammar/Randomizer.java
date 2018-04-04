@@ -72,6 +72,15 @@ class Randomizer {
     }
 
     /**
+     * Returns the number of random intervals stored
+     *
+     * @return the number of random intervals stored
+     */
+    public int get_num_ivls() {
+        return m_rand_ivls.size();
+    }
+
+    /**
      * Randomly chooses and expression based on the distribution
      *
      * @return a randomly chosen expression
@@ -79,19 +88,26 @@ class Randomizer {
     public Expression choose_expression() {
         LOGGER.log(Level.FINE, "Choosing one of {0} expressions, upper bound {1}",
                 new Object[]{m_rand_ivls.size(), m_upper_bound});
-        final double value = ThreadLocalRandom.current().nextDouble(m_upper_bound);
-        LOGGER.log(Level.FINE, "Choosing a value from [0..{0}) gave: {1}",
-                new Object[]{m_upper_bound, value});
-        for (int idx = 0; idx < m_rand_ivls.size(); ++idx) {
-            RandomInterval elem = m_rand_ivls.get(idx);
-            if (elem.is_inside(value)) {
-                LOGGER.log(Level.FINE, "The value {0} interval is found, expression {1}!",
-                        new Object[]{value, elem.get_exp()});
-                return elem.get_exp().duplicate();
+        if (m_rand_ivls.size() == 1) {
+            RandomInterval elem = m_rand_ivls.get(0);
+            LOGGER.log(Level.FINE, "The found, expression is: {0}!", elem.get_exp());
+            return elem.get_exp().duplicate();
+        } else {
+            final double value = ThreadLocalRandom.current().nextDouble(m_upper_bound);
+            LOGGER.log(Level.FINE, "Choosing a value from [0..{0}) gave: {1}",
+                    new Object[]{m_upper_bound, value});
+            for (int idx = 0; idx < m_rand_ivls.size(); ++idx) {
+                RandomInterval elem = m_rand_ivls.get(idx);
+                LOGGER.log(Level.FINE, "Considering intervala {0}", elem);
+                if (elem.is_inside(value)) {
+                    LOGGER.log(Level.FINE, "The value {0} interval is found, expression {1}!",
+                            new Object[]{value, elem.get_exp()});
+                    return elem.get_exp().duplicate();
+                }
             }
+            LOGGER.log(Level.FINE, "The value {0} interval is NOT found!", value);
+            throw new IllegalArgumentException("Unable to match value " + value + " to a random interval!");
         }
-        LOGGER.log(Level.FINE, "The value {0} interval is NOT found!", value);
-        throw new IllegalArgumentException("Unable to match value " + value + " to a random interval!");
     }
 
     /**

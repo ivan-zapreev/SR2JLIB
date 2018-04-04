@@ -21,6 +21,7 @@
  */
 package nl.tudelft.dcsc.sr2jlib.grammar;
 
+import java.util.logging.Logger;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
 
 /**
@@ -29,6 +30,9 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
  * @author Dr. Ivan S. Zapreev
  */
 class RandomInterval {
+
+    //Stores the reference to the logger
+    private static final Logger LOGGER = Logger.getLogger(RandomInterval.class.getName());
 
     private double m_left;
     private double m_right;
@@ -57,6 +61,15 @@ class RandomInterval {
     public void shift(final double value) {
         this.m_left += value;
         this.m_right += value;
+    }
+
+    /**
+     * Provides the left value of the interval
+     *
+     * @return the left value of the interval
+     */
+    public double get_left_bnd() {
+        return m_left;
     }
 
     /**
@@ -95,5 +108,10 @@ class RandomInterval {
      */
     public boolean is_inside(final double value) {
         return (m_left <= value) && (value < m_right);
+    }
+
+    @Override
+    public String toString() {
+        return "[" + m_left + "," + m_right + ") -> " + m_exp;
     }
 }

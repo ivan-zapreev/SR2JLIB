@@ -45,7 +45,7 @@ class DefGrammarEntry implements GrammarEntry {
 
     /**
      * The basic constructor
-     * 
+     *
      * @param name the grammar entry name
      * @param expr the grammar entry's terminal expresion
      */
@@ -77,10 +77,10 @@ class DefGrammarEntry implements GrammarEntry {
     }
 
     @Override
-    public void pre_process_arg_sizes(){
+    public void pre_process_arg_sizes() {
         //Noting to be done
     }
-    
+
     @Override
     public int get_min_size() {
         return m_min_max_size[0];
@@ -124,5 +124,12 @@ class DefGrammarEntry implements GrammarEntry {
         List<Double> list = new ArrayList();
         list.add(1.0);
         return list;
+    }
+
+    @Override
+    public boolean has_many(String signature) {
+        //The default entries have no signatures so there 
+        //is many possible default expressions
+        return true;
     }
 }

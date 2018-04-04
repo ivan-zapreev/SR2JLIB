@@ -99,16 +99,11 @@ public class FunctExpr extends Expression {
         this.m_sign = strip(desc.substring(ss_idx + 1, se_idx));
         this.m_min_size = 0;
         this.m_max_size = 0;
-
         this.m_node_size = 0;
-
-        if (m_sign.isEmpty()) {
-            throw new IllegalArgumentException("The argument list of '" + desc
-                    + "' can not be ampty!");
-        }
-
         this.m_child = new ArrayList();
-        this.m_arg_types = m_sign.split(SIGN_ARG_DELIM_REG);
+        //It can happen that there is no arguments for the functional expression,
+        //then just make a zero length array to keep things rolling. (ToDo: make a separate type?)
+        this.m_arg_types = (m_sign.isEmpty() ? new String[0] : m_sign.split(SIGN_ARG_DELIM_REG));
         this.m_arg_occ = new int[m_arg_types.length];
         for (int idx = 0; idx < m_arg_types.length; ++idx) {
             final String var_str = VAR_NAME_PREF_STR + (idx + 1);
@@ -218,9 +213,6 @@ public class FunctExpr extends Expression {
         this.m_arg_occ = other.m_arg_occ;
         this.m_is_plc = other.m_is_plc;
         this.m_is_b_plc = other.m_is_b_plc;
-        this.m_unb_cnt = other.m_unb_cnt;
-        this.m_fin_sum_max = other.m_fin_sum_max;
-        this.m_fin_max = other.m_fin_max;
         this.m_mm_sizes = other.m_mm_sizes;
         this.m_node_size = other.m_node_size;
     }
@@ -233,7 +225,7 @@ public class FunctExpr extends Expression {
             nterm.add(this);
         }
         m_child.forEach((child) -> {
-            child.get_nodes(term, nterm);
+            child.get_nodes(nterm, term);
         });
     }
 
@@ -322,13 +314,6 @@ public class FunctExpr extends Expression {
         return new FunctExpr(this);
     }
 
-    //Stores the number of unbounded size arguments
-    private int m_unb_cnt = 0;
-    //Stores the sum of maximum argument sizes, capping the 
-    //unbounded ones with the maimum value of the bounded
-    private int m_fin_sum_max = 0;
-    //Stores the maximum bounded maximum argument size
-    private int m_fin_max = 0;
     //Stores the retrieved arrays of min/max argument sizes per argument
     private int[][] m_mm_sizes = null;
 
@@ -339,15 +324,7 @@ public class FunctExpr extends Expression {
             m_mm_sizes = new int[num_args][];
             for (int arg_idx = 0; arg_idx < num_args; ++arg_idx) {
                 m_mm_sizes[arg_idx] = m_provider.get_min_max_size(m_arg_types[arg_idx]);
-                //Count the number of unbounded arguments
-                if (m_mm_sizes[arg_idx][1] == Integer.MAX_VALUE) {
-                    m_unb_cnt += 1;
-                } else {
-                    m_fin_sum_max += m_mm_sizes[arg_idx][1];
-                    m_fin_max = Math.max(m_fin_max, m_mm_sizes[arg_idx][1]);
-                }
             }
-            m_fin_sum_max += m_unb_cnt * m_fin_max;
         }
     }
 
@@ -358,37 +335,30 @@ public class FunctExpr extends Expression {
      * @return the array of sizes per argument
      */
     private int[] distribute_argument_size(int rem_size) {
+        //If somehow we do not have enough, please be generous, this is a soft constriant
+        if (rem_size < m_min_size) {
+            rem_size = m_min_size;
+        }
+        rem_size -= NODE_SIZE_1;
+
         final int num_args = m_arg_types.length;
         int[] a_sizes = new int[num_args];
-        //Check if we can use maximum sizes for all arguments
-        if (rem_size < m_fin_sum_max) {
-            //If we can not then give each finite argment the maximum fair share
-            while (rem_size > 0) {
-                int p_rem_size = rem_size;
-                for (int arg_idx = 0; arg_idx < num_args; ++arg_idx) {
-                    if ((a_sizes[arg_idx] + m_mm_sizes[arg_idx][0]) < m_mm_sizes[arg_idx][1]) {
-                        a_sizes[arg_idx] += 1;
-                        --rem_size;
-                        if (rem_size <= 0) {
-                            break;
-                        }
-                    }
-                }
-                //We will not be able to use all of the points, all arguments are full
-                if (p_rem_size == rem_size) {
-                    break;
-                }
-            }
-        } else {
-            //Each argument can get maximum size, the unbounded
-            //args get an equal share of the remaining size
-            final int rest = rem_size - m_fin_sum_max;
-            final int unb_extra = ((m_unb_cnt != 0) ? (int) Math.ceil(rest / m_unb_cnt) : 0);
-            for (int arg_idx = 0; arg_idx < num_args; ++arg_idx) {
-                if (m_mm_sizes[arg_idx][1] == Integer.MAX_VALUE) {
-                    a_sizes[arg_idx] = m_fin_max + unb_extra;
-                } else {
-                    a_sizes[arg_idx] = m_mm_sizes[arg_idx][1];
+
+        //First give all the arguments their minimum sizes, taking
+        //into account the number of agument occurances
+        for (int arg_idx = 0; arg_idx < num_args; ++arg_idx) {
+            a_sizes[arg_idx] = m_mm_sizes[arg_idx][0];
+            rem_size -= m_mm_sizes[arg_idx][0] * m_arg_occ[arg_idx];
+        }
+
+        //Use the remains to fill up the sizes until the maximum
+        int p_rem_size = 0;
+        while ((rem_size > 0) && (p_rem_size != rem_size)) {
+            p_rem_size = rem_size;
+            for (int arg_idx = 0; (arg_idx < num_args) && (rem_size > 0); ++arg_idx) {
+                if (a_sizes[arg_idx] < m_mm_sizes[arg_idx][1]) {
+                    a_sizes[arg_idx] += 1;
+                    rem_size -= m_arg_occ[arg_idx];
                 }
             }
         }
@@ -397,17 +367,11 @@ public class FunctExpr extends Expression {
 
     @Override
     public void materialize(int rem_size) {
-        //Define the number of arguments constant
-        final int num_args = m_arg_types.length;
-
-        //If somehow we do not have enough, please be generous, this is a soft constriant
-        if (rem_size < m_min_size) {
-            rem_size = m_min_size;
-        }
-        rem_size -= NODE_SIZE_1;
-
         //Distribute argument size
         final int[] a_sizes = distribute_argument_size(rem_size);
+
+        //Define the number of arguments constant
+        final int num_args = m_arg_types.length;
 
         //Materialize children according to sizes
         for (int arg_rem = num_args; arg_rem > 0; arg_rem--) {
@@ -416,8 +380,8 @@ public class FunctExpr extends Expression {
             //Get the argument type
             final String arg_type = m_arg_types[arg_idx];
             //Chose the size of expression for this argument
-            final int arg_size = a_sizes[arg_idx];
-            //Generate an expression
+            int arg_size = a_sizes[arg_idx];
+            //Choose an expression for the size
             final Expression exp = m_provider.choose_expr(arg_type, arg_size);
             LOGGER.log(Level.FINE, "Materializing expression {0} for size {1}",
                     new Object[]{exp, arg_size});
@@ -448,12 +412,7 @@ public class FunctExpr extends Expression {
         return m_func;
     }
 
-    /**
-     * Allows to get a signature of the expression
-     *
-     * @return the expression's signature
-     * @throws UnsupportedOperationException in case the method is nod supported
-     */
+    @Override
     public String get_signature() {
         return m_sign;
     }
@@ -510,7 +469,7 @@ public class FunctExpr extends Expression {
 
     @Override
     final protected boolean is_terminal() {
-        return false;
+        return m_sign.isEmpty();
     }
 
     @Override

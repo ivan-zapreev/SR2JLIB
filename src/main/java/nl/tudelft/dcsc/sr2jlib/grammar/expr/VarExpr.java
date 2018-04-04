@@ -79,7 +79,7 @@ public class VarExpr extends TermExpr<Integer> {
 
     @Override
     public String serialize() {
-        return Creator.VAR_NAME + "[" + m_value + "]";
+        return Creator.get_var_name(m_value);
     }
 
     @Override
@@ -94,6 +94,6 @@ public class VarExpr extends TermExpr<Integer> {
 
     @Override
     public String to_text() {
-        return "x"+m_value;
+        return Creator.get_var_name(m_value);
     }
 }

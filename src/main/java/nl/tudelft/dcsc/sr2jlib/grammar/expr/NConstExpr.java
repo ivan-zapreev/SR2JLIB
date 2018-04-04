@@ -55,7 +55,8 @@ public class NConstExpr extends TermExpr<Double> {
 
     @Override
     public void materialize(int max_size) {
-        m_value = (double) ThreadLocalRandom.current().nextFloat();
+        m_value = (ThreadLocalRandom.current().nextBoolean() ? 1.0 : -1.0)
+                * (double) ThreadLocalRandom.current().nextDouble(1.0 + Float.MIN_VALUE);
     }
 
     @Override
