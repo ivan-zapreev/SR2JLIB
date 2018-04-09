@@ -186,9 +186,9 @@ class FunctGrammarEntry implements GrammarEntry {
 
     @Override
     public void pre_process_arg_sizes() {
-        for (Expression expr : m_funct) {
+        m_funct.forEach((expr) -> {
             expr.pre_process_arg_sizes();
-        }
+        });
     }
 
     @Override
@@ -210,6 +210,9 @@ class FunctGrammarEntry implements GrammarEntry {
             rnd = new Randomizer();
             rands.put(exp.get_min_size(), rnd);
         }
+        LOGGER.log(Level.INFO, "Registering min size: {0}, "
+                + "expression: {1}, weight: {2}  ",
+                new Object[]{exp.get_min_size(), exp, weight});
         rnd.register(exp, weight);
     }
 
@@ -236,8 +239,29 @@ class FunctGrammarEntry implements GrammarEntry {
         }
     }
 
-    @Override
-    public void prepare_randomizers() {
+    /**
+     * Allows to get a new randomizer object for the given size. If it is
+     * already exists then it is taken from the m_size2rnds map. If not then a
+     * new instance is created, however it is not put into the m_size2rnds map
+     * yet!
+     *
+     * @param size the size for which the randomizer is to be retrieved
+     * @return the randomizer object
+     */
+    private Randomizer get_size2rnd(final int size) {
+        Randomizer rnd = m_size2rnds.get(size);
+        if (rnd == null) {
+            rnd = new Randomizer();
+        }
+        return rnd;
+    }
+
+    /**
+     * Register the expressions in the randomizers and compute min/max sizes.
+     *
+     * @return true if there are expressions with infinite maximum size
+     */
+    private boolean compute_min_max_sizes() {
         boolean is_max_inf = false;
         for (int idx = 0; idx < m_funct.size(); ++idx) {
             final Expression expr = m_funct.get(idx);
@@ -248,54 +272,61 @@ class FunctGrammarEntry implements GrammarEntry {
             m_max_fin_size = Math.max(m_max_fin_size, expr.get_min_size());
             //For the maximum size we want to know if there is 
             //infinity and the maximum finite size to consider
-            final int max_size = expr.get_max_size();
-            if (max_size == Integer.MAX_VALUE) {
+            if (expr.is_max_size_inf()) {
                 is_max_inf = true;
             } else {
-                m_max_fin_size = Math.max(m_max_fin_size, max_size);
+                m_max_fin_size = Math.max(m_max_fin_size, expr.get_max_size());
             }
         }
-        //If the maximum is infinity then add an extra randomizer for those
+        return is_max_inf;
+    }
+
+    /**
+     * If there are expressions with infinite maximum size then create and
+     * register a randomizer for them.
+     *
+     * @param is_max_inf true if the expressions with infinite maximum size
+     * exist, otherwise false.
+     * @return the registered randomizer for the expressions with the infinite
+     * maximum size or null if none is needed.
+     */
+    private Randomizer register_inf_max_rnd(final boolean is_max_inf) {
+        final Randomizer max_rnd;
         if (is_max_inf) {
             m_max_fin_size += 1;
+            max_rnd = get_size2rnd(m_max_fin_size);
+            m_size2rnds.put(m_max_fin_size, max_rnd);
+        } else {
+            max_rnd = null;
         }
         LOGGER.log(Level.FINE, "Grammar entry min min/max fin. sizes are: {0}/{1}",
                 new Object[]{m_min_min_size, m_max_fin_size});
-        //Propagate expressions based on their minimum and maximum sizes!
+        return max_rnd;
+    }
 
-        //We shall start from minimum size and go to maximum finite size
-        //and propagate all expressions which have the size index in the min/max range
-        //The very last randomizer will be for the remaining sizes between the found
-        //finite maximum and infinity, if any
-        for (int idx = m_min_min_size; idx < m_max_fin_size; ++idx) {
-            LOGGER.log(Level.FINE, "Propagating randomizer {0}", idx);
-            final Randomizer curr = m_size2rnds.get(idx);
-            //The current randomizer may be null if the previous one
-            //did not propagate anything because of fixed sizes
-            if (curr != null) {
-                final int next_idx = idx + 1;
-                Randomizer next = m_size2rnds.get(next_idx);
-                if (next == null) {
-                    next = new Randomizer();
+    /**
+     * Register the expressions with infinite maximum size.
+     *
+     * @param max_rnd the infinite maximum size randomizer, or null if none
+     * @param curr the current finitie size randomizer
+     */
+    private void register_inf_max_expr(Randomizer max_rnd, Randomizer curr) {
+        if (max_rnd != null) {
+            curr.get_ivls().forEach((ivl) -> {
+                final Expression exp = ivl.get_exp();
+                if (exp.is_max_size_inf()) {
+                    LOGGER.log(Level.INFO, "Adding expression {0} to "
+                            + " inf max size level!", exp);
+                    max_rnd.register(exp, ivl.get_weight());
                 }
-                for (RandomInterval ivl : curr.get_ivls()) {
-                    Expression exp = ivl.get_exp();
-                    LOGGER.log(Level.FINE, "{0} has max size {1}, copying to level {2}",
-                            new Object[]{exp, exp.get_max_size(), next_idx});
-                    //If we would propagate all the elements then we would not
-                    //be able to fulfil the requested size and would often get 
-                    //the tree size smaller than requested
-                    if (exp.get_max_size() >= next_idx) {
-                        next.register(exp, ivl.get_weight());
-                    }
-                }
-                //Put the randomizer into the map only if it is not empty
-                if (!next.is_empty()) {
-                    m_size2rnds.put(next_idx, next);
-                }
-            }
+            });
         }
-        //Make distributions now when the expressons have been filled in
+    }
+
+    /**
+     * Prepare the randomizer distributions once the maps are ready
+     */
+    private void prepare_distributions() {
         m_size2rnds.forEach((key, value) -> {
             LOGGER.log(Level.FINE, "Preparing distributions for level {0}", key);
             value.prepare_distrib();
@@ -304,6 +335,71 @@ class FunctGrammarEntry implements GrammarEntry {
             LOGGER.log(Level.FINE, "Preparing distributions for signature {0}", key);
             value.prepare_distrib();
         });
+    }
+
+    /**
+     * Propagates current randomizers forward, based on the maximum size. Does
+     * not propagate the randomizer in case it is the only one to be propagated.
+     * The idea here is not to allow multiple nested equal expressions when
+     * generating the tree.
+     *
+     * @param max_rnd the infinite maximum size randomizer
+     * @param curr the current size randomizer
+     * @param next the next size randomizer
+     * @param next_size the next size value
+     */
+    private void propagate_randomizers(final Randomizer max_rnd,
+            final Randomizer curr, final Randomizer next, final int next_size) {
+        //If the next randomizer is not the one corresponding
+        //to the infinite maximum size expressions then propagate
+        //the the ivls if their maximum size is larger than the current
+        if (next != max_rnd) {
+            curr.get_ivls().forEach((ivl) -> {
+                final Expression exp = ivl.get_exp();
+                //Propagate the expressions based on their maximum size 99.92 -> DCM
+                if (exp.get_max_size() >= next_size) {
+                    next.register(exp, ivl.get_weight());
+                }
+            });
+
+            //Add the randomizer to the map if it is not empty
+            if (!next.is_empty()) {
+                m_size2rnds.put(next_size, next);
+            }
+        }
+    }
+
+    @Override
+    public void prepare_randomizers() {
+        //Register the expressions in the randomizers and compute min/max sizes
+        final boolean is_max_inf = compute_min_max_sizes();
+        //If the maximum is infinity then add an extra randomizer for those
+        final Randomizer max_rnd = register_inf_max_rnd(is_max_inf);
+
+        //Propagate expressions based on their minimum and maximum sizes!
+        //We shall start from minimum size and go to maximum finite size
+        //and propagate all expressions which have the size index in the min/max range
+        //The very last randomizer will be for the remaining sizes between the found
+        //finite maximum and infinity, if any
+        for (int curr_size = m_min_min_size; curr_size < m_max_fin_size; ++curr_size) {
+            LOGGER.log(Level.FINE, "Propagating randomizer {0}", curr_size);
+            final Randomizer curr = m_size2rnds.get(curr_size);
+            //The current randomizer may be null if the previous one
+            //did not propagate anything because of fixed sizes
+            if (curr != null) {
+                final int next_size = curr_size + 1;
+                final Randomizer next = get_size2rnd(next_size);
+
+                //Register the expressions with infinite maximum size
+                register_inf_max_expr(max_rnd, curr);
+
+                //Propagate randomizers forward, based on their maximum size
+                propagate_randomizers(max_rnd, curr, next, next_size);
+            }
+        }
+
+        //Make distributions now when the expressons have been filled in
+        prepare_distributions();
     }
 
     @Override

@@ -140,6 +140,13 @@ public abstract class Expression {
     public abstract int get_max_size();
 
     /**
+     * Allows to check if the expression can be of an infinite size
+     *
+     * @return true if the expression can be of infinite size
+     */
+    public abstract boolean is_max_size_inf();
+
+    /**
      * Allows to get a signature of the expression
      *
      * @return the expression's signature

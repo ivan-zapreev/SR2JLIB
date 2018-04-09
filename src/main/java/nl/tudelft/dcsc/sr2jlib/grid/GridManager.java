@@ -34,20 +34,23 @@ public class GridManager {
     private final int m_size_x;
     private final int m_size_y;
     private final Individual[][] m_pop_grid;
+    private final GridObserver m_observer;
 
     /**
      * The basic constructor
      *
+     * @param observer the observer to monitor the grid changes
      * @param size_x the grid size in x
      * @param size_y the grid size in y
      */
-    public GridManager(final int size_x, final int size_y) {
+    public GridManager(final GridObserver observer, final int size_x, final int size_y) {
         this.m_size_x = size_x;
         this.m_size_y = size_y;
         this.m_pop_grid = new Individual[size_x][];
         IntStream.range(0, size_x).forEachOrdered(idx -> {
             this.m_pop_grid[idx] = new Individual[size_y];
         });
+        this.m_observer = observer;
     }
 
     /**
@@ -74,7 +77,7 @@ public class GridManager {
      * @param ind the individual with properly set x,y coordinates
      * @return true if the individual is present by the given coordinates
      */
-    public synchronized boolean has_individual(final Individual ind) {
+    public synchronized boolean has(final Individual ind) {
         return (m_pop_grid[ind.get_pos_x()][ind.get_pos_y()] == ind);
     }
 
@@ -85,7 +88,7 @@ public class GridManager {
      * @param pos_y the y coordinate
      * @return the individual
      */
-    public synchronized Individual get_individual(final int pos_x, final int pos_y) {
+    public synchronized Individual get(final int pos_x, final int pos_y) {
         return m_pop_grid[pos_x][pos_y];
     }
 
@@ -94,9 +97,11 @@ public class GridManager {
      *
      * @param old_ind an old individual to be removed
      */
-    public synchronized void remove_individual(final Individual old_ind) {
+    public synchronized void remove(final Individual old_ind) {
         //Remove an old individual from the grid
         m_pop_grid[old_ind.get_pos_x()][old_ind.get_pos_y()] = null;
+        //Notify the observer
+        m_observer.remove(old_ind);
     }
 
     /**
@@ -104,8 +109,10 @@ public class GridManager {
      *
      * @param new_ind the new individual to be put in place of the old one
      */
-    public synchronized void set_individual(final Individual new_ind) {
+    public synchronized void set(final Individual new_ind) {
         //Add new individual to the grid
         m_pop_grid[new_ind.get_pos_x()][new_ind.get_pos_y()] = new_ind;
+        //Notify the observer
+        m_observer.set(new_ind);
     }
 }

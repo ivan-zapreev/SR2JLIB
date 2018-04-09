@@ -45,7 +45,6 @@ public class BreedingManager {
     //Stores the reference to the logger
     private static final Logger LOGGER = Logger.getLogger(BreedingManager.class.getName());
 
-    private final GridObserver m_observer;
     private final GridManager m_grid_mgr;
     private final int m_num_dofs;
     private final int m_mgr_id;
@@ -61,9 +60,8 @@ public class BreedingManager {
      * @param conf the configuration object
      */
     public BreedingManager(final GridObserver observer, final BreedingManagerConfig conf) {
-        this.m_observer = observer;
         this.m_num_dofs = conf.m_num_dofs;
-        this.m_grid_mgr = new GridManager(conf.m_size_x, conf.m_size_y);
+        this.m_grid_mgr = new GridManager(observer, conf.m_size_x, conf.m_size_y);
         this.m_mgr_id = conf.m_mgr_id;
         this.m_sel_type = conf.m_sel_type;
         this.m_locker = new AreaLocker(conf);
@@ -84,26 +82,19 @@ public class BreedingManager {
             final Individual new_ind) {
         final Fitness old_fitness = old_ind.get_fitness();
         final Fitness new_fitness = new_ind.get_fitness();
-        if (new_fitness.is_zerro() && old_fitness.is_zerro()) {
-            double outcome = ThreadLocalRandom.current().nextDouble(1);
-            return (outcome > 0.5);
+        if (m_sel_type == SelectionType.VALUE) {
+            return old_fitness.is_less(new_fitness)
+                    || (old_fitness.is_equal(new_fitness)
+                    && (new_ind.get_size() < old_ind.get_size()));
         } else {
-            if (m_sel_type == SelectionType.VALUE) {
-                if (old_fitness.equals(new_fitness)) {
-                    return (new_ind.get_size() < old_ind.get_size());
-                } else {
-                    return old_fitness.is_less(new_fitness);
-                }
+            if (m_sel_type == SelectionType.PROB) {
+                final double total = old_fitness.get_fitness() + new_fitness.get_fitness();
+                double outcome = ThreadLocalRandom.current().nextDouble(total);
+                return outcome >= old_fitness.get_fitness();
             } else {
-                if (m_sel_type == SelectionType.PROB) {
-                    final double total = old_fitness.get_fitness() + new_fitness.get_fitness();
-                    double outcome = ThreadLocalRandom.current().nextDouble(total);
-                    return outcome >= old_fitness.get_fitness();
-                } else {
-                    final String msg = "Unsupported selection type: " + m_sel_type;
-                    LOGGER.log(Level.SEVERE, msg);
-                    ErrorManager.error(msg);
-                }
+                final String msg = "Unsupported selection type: " + m_sel_type;
+                LOGGER.log(Level.SEVERE, msg);
+                ErrorManager.error(msg);
             }
         }
         return false;
@@ -117,9 +108,8 @@ public class BreedingManager {
     private void kill_individual(final Individual old_ind) {
         synchronized (m_pop_list) {
             m_pop_list.remove(old_ind);
-            m_grid_mgr.remove_individual(old_ind);
+            m_grid_mgr.remove(old_ind);
         }
-        m_observer.kill_individual(old_ind);
     }
 
     /**
@@ -157,13 +147,11 @@ public class BreedingManager {
      * @param pos_y y position of the individual
      * @param old_ind the old individual
      * @param new_ind the new individual
-     * @param is_force if true then the new individual will be forced in place
-     * of the old one
      * @return true if the new individual is set, otherwise false
      */
     public boolean settle_individual(final int pos_x, final int pos_y,
-            final Individual old_ind, final Individual new_ind, final boolean is_force) {
-        boolean is_settle = is_force || (old_ind == null)
+            final Individual old_ind, final Individual new_ind) {
+        boolean is_settle = (old_ind == null)
                 || does_new_win(old_ind, new_ind);
         if (is_settle) {
             //Found a free spot or a weaker individual
@@ -174,9 +162,8 @@ public class BreedingManager {
                     m_pop_list.remove(old_ind);
                 }
                 m_pop_list.add(new_ind);
-                m_grid_mgr.set_individual(new_ind);
+                m_grid_mgr.set(new_ind);
             }
-            m_observer.add_individual(new_ind);
             LOGGER.log(Level.FINE, "{0} -> Settled individual {1}",
                     new Object[]{Thread.currentThread().getName(), new_ind});
         }
@@ -232,7 +219,7 @@ public class BreedingManager {
                 LOGGER.log(Level.FINE, "{0} -> Current population size is: {1}",
                         new Object[]{Thread.currentThread().getName(),
                             m_pop_list.size()});
-                if (m_grid_mgr.has_individual(ind)) {
+                if (m_grid_mgr.has(ind)) {
                     LOGGER.log(Level.FINE, "{0} -> Released individual {1}",
                             new Object[]{Thread.currentThread().getName(), ind});
                     m_pop_list.add(ind);
@@ -274,10 +261,10 @@ public class BreedingManager {
             }
 
             //Get the old individual at position
-            final Individual old_ind = m_grid_mgr.get_individual(pos_x, pos_y);
+            final Individual old_ind = m_grid_mgr.get(pos_x, pos_y);
 
             //Settle the new individual in place of the old one
-            settle_individual(pos_x, pos_y, old_ind, new_ind, false);
+            settle_individual(pos_x, pos_y, old_ind, new_ind);
 
             //Unlock the area
             m_locker.unlock_area(new_ind);
@@ -308,26 +295,26 @@ public class BreedingManager {
             for (Individual child_ind : new_inds) {
                 LOGGER.log(Level.FINE, "{0} -> Settling child {1} of {2}",
                         new Object[]{Thread.currentThread().getName(), child_ind, parent_ind});
-                if (parent_ind.equals(child_ind)) {
-                    if (parent_ind.get_size() < child_ind.get_size()) {
-                        settle_individual(parent_ind.get_pos_x(), parent_ind.get_pos_y(),
-                                parent_ind, child_ind, true);
-                    }
-                } else {
+                //If the child is as fit as its parent then try settling it into the parent
+                //This shall avoid spreding of the individuals with the same fitness
+                /*if (child_ind.is_equal(parent_ind)) {
+                    settle_individual(parent_ind.get_pos_x(),
+                            parent_ind.get_pos_y(), parent_ind, child_ind);
+                } else {*/
                     //Iterate over the area and see where the new individual can be placed
                     int attempts = area_size;
                     while (attempts != 0) {
                         final int pos_x = area.get_rnd_x_pos();
                         final int pos_y = area.get_rnd_y_pos();
-                        final Individual old_ind = m_grid_mgr.get_individual(pos_x, pos_y);
-                        if (settle_individual(pos_x, pos_y, old_ind, child_ind, false)) {
+                        final Individual old_ind = m_grid_mgr.get(pos_x, pos_y);
+                        if (settle_individual(pos_x, pos_y, old_ind, child_ind)) {
                             break;
                         }
                         attempts--;
                     }
-                }
-                LOGGER.log(Level.FINE, "{0} -> Settling child {1} of {2} is DONE",
-                        new Object[]{Thread.currentThread().getName(), child_ind, parent_ind});
+                    LOGGER.log(Level.FINE, "{0} -> Settling child {1} of {2} is DONE",
+                            new Object[]{Thread.currentThread().getName(), child_ind, parent_ind});
+                /*}*/
             }
         }
     }

@@ -38,6 +38,19 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
  */
 public class Individual {
 
+    @FunctionalInterface
+    public interface ExpressionUpdater {
+
+        /**
+         * Allows to update the expression of the given index
+         *
+         * @param expr the expression
+         * @param idx the expression index
+         * @return the new expression to be set in place of the old one
+         */
+        public Expression update(Expression expr, final int idx);
+    }
+
     //The undefined position value
     private static final int UNDEF_POSITION = -1;
     //Stores the reference to the logger
@@ -94,6 +107,15 @@ public class Individual {
         this.m_max_child_cnt = -1;
         //Computethe individual's fitness
         compute_fitness();
+    }
+
+    /**
+     * Supplies the id of the manager this individual was produced by.
+     *
+     * @return the corresponding manager id.
+     */
+    public int get_mgr_id() {
+        return m_mgr_id;
     }
 
     /**
@@ -220,12 +242,36 @@ public class Individual {
      *
      * @return copies of expressions representing this individual
      */
-    public List<Expression> get_expr() {
+    public List<Expression> get_expr_list() {
         List<Expression> result = new ArrayList();
         for (int idx = 0; idx < m_exps.length; ++idx) {
             result.add(m_exps[idx].duplicate());
         }
         return result;
+    }
+
+    /**
+     * Allow to update the internal expressions.
+     *
+     * @param updater the updater
+     */
+    public void update_exprs(final ExpressionUpdater updater) {
+        for (int idx = 0; idx < m_exps.length; ++idx) {
+            m_exps[idx] = updater.update(m_exps[idx], idx);
+        }
+    }
+
+    /**
+     * Allows to get expressions representing this individual.
+     *
+     * @return copies of expressions representing this individual
+     */
+    public Expression[] get_expr_array() {
+        Expression[] exps = new Expression[m_exps.length];
+        for (int idx = 0; idx < m_exps.length; ++idx) {
+            exps[idx] = m_exps[idx].duplicate();
+        }
+        return exps;
     }
 
     /**
@@ -280,8 +326,8 @@ public class Individual {
      * @param other the other individual to compare with
      * @return true if the fitness of both individuals are equal
      */
-    public boolean equals(final Individual other) {
-        return this.m_fitness.equals(other.m_fitness);
+    public boolean is_equal(final Individual other) {
+        return this.m_fitness.is_equal(other.m_fitness);
     }
 
     /**

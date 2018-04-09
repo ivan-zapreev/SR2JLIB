@@ -149,4 +149,10 @@ public abstract class TermExpr<ValueType> extends Expression {
     public String get_signature() {
         return "";
     }
+
+    @Override
+    public boolean is_max_size_inf() {
+        return false;
+    }
+
 }

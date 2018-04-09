@@ -45,6 +45,20 @@ public class NConstExpr extends TermExpr<Double> {
     }
 
     /**
+     * Allows to instantiate a materialized numerical constant with the given
+     * constant value.
+     *
+     * @param expr_type the expression type
+     * @param value the value to be stored
+     * @return the created and materialized numerical constant
+     */
+    public static NConstExpr make_const(final String expr_type, final double value) {
+        NConstExpr expr = new NConstExpr(expr_type);
+        expr.m_value = value;
+        return expr;
+    }
+
+    /**
      * The copy constructor
      *
      * @param other the numeric constant to copy from
@@ -66,7 +80,7 @@ public class NConstExpr extends TermExpr<Double> {
 
     @Override
     public String serialize() {
-        return Double.toString(m_value);
+        return m_value < 0.0 ? "(" + Double.toString(m_value) + ")" : Double.toString(m_value);
     }
 
     @Override
@@ -81,6 +95,6 @@ public class NConstExpr extends TermExpr<Double> {
 
     @Override
     public String to_text() {
-        return Double.toString(m_value);
+        return m_value < 0.0 ? "(" + Double.toString(m_value) + ")" : Double.toString(m_value);
     }
 }

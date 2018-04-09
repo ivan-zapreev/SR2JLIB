@@ -21,12 +21,17 @@
  */
 package nl.tudelft.dcsc.sr2jlib.fitness;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * The class that will be used for storing the fitness values
  *
  * @author Dr. Ivan S. Zapreev
  */
 public class Fitness {
+
+    private static final Logger LOGGER = Logger.getLogger(Fitness.class.getName());
 
     /**
      * Stores the fitness value
@@ -80,12 +85,8 @@ public class Fitness {
      * @param other the other fitness
      * @return true if the two fitness values are equal, otherwise false
      */
-    public boolean equals(final Fitness other) {
-        if (other != null) {
-            return (this.m_ftn == other.m_ftn);
-        } else {
-            throw new IllegalArgumentException("Attempting to compare withness with null!");
-        }
+    public boolean is_equal(final Fitness other) {
+        return (this.m_ftn == other.m_ftn);
     }
 
     /**

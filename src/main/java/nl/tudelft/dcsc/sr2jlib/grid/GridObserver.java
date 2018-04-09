@@ -42,14 +42,14 @@ public interface GridObserver {
      *
      * @param ind the individual to be set into the grid.
      */
-    public void add_individual(final Individual ind);
+    public void set(final Individual ind);
 
     /**
      * Will be called if an individual is to be removed from the population.
      *
      * @param ind an individual to be removed
      */
-    public void kill_individual(final Individual ind);
+    public void remove(final Individual ind);
 
     /**
      * Allows to get the best fit individuals.

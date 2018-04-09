@@ -127,6 +127,28 @@ public class FunctExpr extends Expression {
                 || m_sign.equals(NConstExpr.ENTRY_CNUM_STR));
     }
 
+    /**
+     * Allows to make a materialized binary expression which further is not
+     * fully initialized so must not be used in any mutations.
+     *
+     * @param expr_type the functional expression type
+     * @param x1 the first argument
+     * @param x1_type the first argument type
+     * @param op the operation in between the arguments
+     * @param x2 the second argument
+     * @param x2_type the second argument type
+     * @return
+     */
+    public static FunctExpr make_binary(final String expr_type,
+            final Expression x1, final String x1_type, final String op,
+            final Expression x2, final String x2_type) {
+        FunctExpr expr = new FunctExpr(null, expr_type,
+                "[x1" + op + "x2](" + x1_type + "," + x2_type + ")");
+        expr.m_child.add(x1);
+        expr.m_child.add(x2);
+        return expr;
+    }
+
     @Override
     public int compute_max_size() {
         LOGGER.log(Level.FINE, "Computing maximum node size for: {0}", this);
@@ -307,6 +329,11 @@ public class FunctExpr extends Expression {
     @Override
     public int get_max_size() {
         return m_max_size;
+    }
+
+    @Override
+    public boolean is_max_size_inf() {
+        return (m_max_size == Integer.MAX_VALUE);
     }
 
     @Override

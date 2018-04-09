@@ -48,9 +48,10 @@ public class Creator {
      * The name of the array argument used by the individual dof functions
      */
     public static final String VAR_NAME = "args";
-    
+
     /**
      * Allows to get the variable name for the variable with the given index.
+     *
      * @param idx the variable index name
      * @return the variable name
      */
@@ -154,6 +155,7 @@ public class Creator {
                     + "  } ";
         }
         contents += "} ";
+        LOGGER.log(Level.FINE, "{0}: {1}", new Object[]{full_name, contents});
         return new InMemoryJavaFileObject(full_name, contents);
     }
 

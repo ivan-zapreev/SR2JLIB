@@ -52,8 +52,8 @@ public class Grammar implements GrammarProvider {
     private static final String COMMENT_STR = "//";
     private static final String COMMENT_REG = "//.*$";
 
-    private static final String BOOL_ENTRY_TYPE_STR = "B";
-    private static final String NUM_ENTRY_TYPE_STR = "R";
+    public static final String BOOL_ENTRY_TYPE_STR = "B";
+    public static final String NUM_ENTRY_TYPE_STR = "R";
 
     //Stores the manager to dof index to grammar mappints
     private static final Map<Integer, Map<Integer, Grammar>> MGR_GRAMMS = new HashMap();
