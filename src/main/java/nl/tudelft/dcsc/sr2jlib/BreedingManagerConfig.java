@@ -51,6 +51,12 @@ public class BreedingManagerConfig extends AreaLockerConfig {
     public final boolean m_is_allow_dying;
 
     /**
+     * Stores the flag indicating if we shall avoid multiplying children which
+     * have the same fitness as their parent
+     */
+    public final boolean m_is_avoid_equal;
+
+    /**
      * The minimum number of children before dying
      */
     public final int m_min_chld_cnt;
@@ -72,6 +78,10 @@ public class BreedingManagerConfig extends AreaLockerConfig {
      * @param sel_type the individual selection type,
      * @param is_allow_dying if true then individuals are dying after they had
      * some number of children
+     * @param is_avoid_equal if true then the children what are equally fit to
+     * their parent will be attempted to be settled into their parent's
+     * position. This shall prevent spreading of the equally fit children with
+     * meaningless mutations.
      * @param min_chld_cnt the minimum number of children before dying
      * @param max_chld_cnt the maximum number of children before dying
      */
@@ -82,6 +92,7 @@ public class BreedingManagerConfig extends AreaLockerConfig {
             final int ch_sp_x, final int ch_sp_y,
             final SelectionType sel_type,
             final boolean is_allow_dying,
+            final boolean is_avoid_equal,
             final int min_chld_cnt,
             final int max_chld_cnt) {
         super(size_x, size_y, ch_sp_x, ch_sp_y);
@@ -91,6 +102,7 @@ public class BreedingManagerConfig extends AreaLockerConfig {
         this.m_is_allow_dying = is_allow_dying;
         this.m_min_chld_cnt = min_chld_cnt;
         this.m_max_chld_cnt = max_chld_cnt;
+        this.m_is_avoid_equal = is_avoid_equal;
     }
 
 }

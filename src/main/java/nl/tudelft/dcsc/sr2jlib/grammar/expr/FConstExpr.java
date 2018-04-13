@@ -24,24 +24,24 @@ package nl.tudelft.dcsc.sr2jlib.grammar.expr;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Numeric constant expression
+ * Float constant expression
  *
  * @author Dr. Ivan S. Zapreev
  */
-public class NConstExpr extends TermExpr<Double> {
+public class FConstExpr extends ConstExpr<Float> {
 
     /**
      * The character representing the numeric constant entry
      */
-    public static final String ENTRY_CNUM_STR = "D";
+    public static final String ENTRY_CFLOAT_STR = "F";
 
     /**
      * The basic constructor
      *
      * @param expr_type the expression type
      */
-    public NConstExpr(final String expr_type) {
-        super(expr_type);
+    public FConstExpr(final String expr_type) {
+        super(expr_type, ENTRY_CFLOAT_STR);
     }
 
     /**
@@ -52,8 +52,8 @@ public class NConstExpr extends TermExpr<Double> {
      * @param value the value to be stored
      * @return the created and materialized numerical constant
      */
-    public static NConstExpr make_const(final String expr_type, final double value) {
-        NConstExpr expr = new NConstExpr(expr_type);
+    public static FConstExpr make_const(final String expr_type, final float value) {
+        FConstExpr expr = new FConstExpr(expr_type);
         expr.m_value = value;
         return expr;
     }
@@ -63,38 +63,31 @@ public class NConstExpr extends TermExpr<Double> {
      *
      * @param other the numeric constant to copy from
      */
-    protected NConstExpr(final NConstExpr other) {
+    protected FConstExpr(final FConstExpr other) {
         super(other);
     }
 
     @Override
     public void materialize(int max_size) {
-        m_value = (ThreadLocalRandom.current().nextBoolean() ? 1.0 : -1.0)
-                * (double) ThreadLocalRandom.current().nextDouble(1.0 + Float.MIN_VALUE);
+        m_value = (ThreadLocalRandom.current().nextBoolean() ? 1.0f : -1.0f)
+                * (ThreadLocalRandom.current().nextFloat()
+                //Add the minimum value some times in order to get value >=1
+                + (ThreadLocalRandom.current().nextBoolean() ? 0.0f : Float.MIN_VALUE));
     }
 
     @Override
     public synchronized Expression duplicate() {
-        return new NConstExpr(this);
+        return new FConstExpr(this);
     }
 
     @Override
     public String serialize() {
-        return m_value < 0.0 ? "(" + Double.toString(m_value) + ")" : Double.toString(m_value);
+        final String value = Float.toString(m_value);
+        return m_value < 0.0 ? "(" + value + ")" : value;
     }
 
     @Override
     public String toString() {
-        return ENTRY_CNUM_STR;
-    }
-
-    @Override
-    public boolean is_equal_funct(Expression expr) {
-        return (expr instanceof NConstExpr);
-    }
-
-    @Override
-    public String to_text() {
-        return m_value < 0.0 ? "(" + Double.toString(m_value) + ")" : Double.toString(m_value);
+        return ENTRY_CFLOAT_STR;
     }
 }

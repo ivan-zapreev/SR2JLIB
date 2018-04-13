@@ -32,6 +32,11 @@ import nl.tudelft.dcsc.sr2jlib.instance.Creator;
 public class VarExpr extends TermExpr<Integer> {
 
     /**
+     * The character representing the variable name prefix
+     */
+    public static final String VAR_NAME_PREFIX_STR = "x";
+
+    /**
      * The character representing the variable entry
      */
     public static final String ENTRY_VAR_STR = "V";
@@ -53,7 +58,7 @@ public class VarExpr extends TermExpr<Integer> {
      * maximum variable index.
      */
     public VarExpr(final String expr_type, final int num_vars) {
-        super(expr_type);
+        super(expr_type, ENTRY_VAR_STR);
         this.m_num_vars = num_vars;
     }
 
@@ -83,17 +88,17 @@ public class VarExpr extends TermExpr<Integer> {
     }
 
     @Override
+    public String to_text() {
+        return VAR_NAME_PREFIX_STR + m_value;
+    }
+
+    @Override
     public String toString() {
         return ENTRY_VAR_STR;
     }
 
     @Override
-    public boolean is_equal_funct(Expression expr) {
-        return (expr instanceof VarExpr);
-    }
-
-    @Override
-    public String to_text() {
-        return Creator.get_var_name(m_value);
+    public boolean is_const() {
+        return false;
     }
 }

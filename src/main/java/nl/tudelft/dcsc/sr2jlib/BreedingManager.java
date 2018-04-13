@@ -52,6 +52,7 @@ public class BreedingManager {
     private final SelectionType m_sel_type;
     private final AreaLocker m_locker;
     private final boolean m_is_allow_dying;
+    private final boolean m_is_avoid_equal;
 
     /**
      * The basic constructor
@@ -67,6 +68,7 @@ public class BreedingManager {
         this.m_locker = new AreaLocker(conf);
         this.m_pop_list = new LinkedList();
         this.m_is_allow_dying = conf.m_is_allow_dying;
+        this.m_is_avoid_equal = conf.m_is_avoid_equal;
         //Set the min max children count 
         Individual.set_min_max_child_cnt(conf.m_min_chld_cnt, conf.m_max_chld_cnt);
     }
@@ -297,10 +299,10 @@ public class BreedingManager {
                         new Object[]{Thread.currentThread().getName(), child_ind, parent_ind});
                 //If the child is as fit as its parent then try settling it into the parent
                 //This shall avoid spreding of the individuals with the same fitness
-                /*if (child_ind.is_equal(parent_ind)) {
+                if (m_is_avoid_equal && child_ind.is_equal(parent_ind)) {
                     settle_individual(parent_ind.get_pos_x(),
                             parent_ind.get_pos_y(), parent_ind, child_ind);
-                } else {*/
+                } else {
                     //Iterate over the area and see where the new individual can be placed
                     int attempts = area_size;
                     while (attempts != 0) {
@@ -314,7 +316,7 @@ public class BreedingManager {
                     }
                     LOGGER.log(Level.FINE, "{0} -> Settling child {1} of {2} is DONE",
                             new Object[]{Thread.currentThread().getName(), child_ind, parent_ind});
-                /*}*/
+                }
             }
         }
     }

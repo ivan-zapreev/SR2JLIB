@@ -27,6 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import nl.tudelft.dcsc.sr2jlib.grammar.Grammar;
 import nl.tudelft.dcsc.sr2jlib.grammar.GrammarProvider;
 
 /**
@@ -51,6 +55,46 @@ public class FunctExpr extends Expression {
     private static final int NODE_SIZE_1 = 1;
     private static final int FIRST_VAR_IDX = 1;
     private static final String FIRST_VAR_NAM_STR = VAR_NAME_PREF_STR + FIRST_VAR_IDX;
+
+    private static final ScriptEngineManager SCRIPT_EM = new ScriptEngineManager();
+    private static final String SCRIPT_ENGINE_NAME = "Nashorn";
+    private static final String THREADING_PROPERTY = "THREADING";
+    private static final String IMPORT_JAVA_MATH_CLASS_SRT = "var Math = Java.type(\"java.lang.Math\");";
+    private static ScriptEngine SCRIPT_ENGINE;
+
+    /**
+     * Allows to import java.lang.Math for being used in expressions into the
+     * engine.
+     *
+     * @param script_eng the script engine to be used, may be null
+     * @return the script engine if the import was successful, otherwise null
+     */
+    private static ScriptEngine import_java_math(final ScriptEngine script_eng) {
+        if (script_eng != null) {
+            try {
+                script_eng.eval(IMPORT_JAVA_MATH_CLASS_SRT);
+                return script_eng;
+            } catch (ScriptException ex) {
+                LOGGER.log(Level.WARNING, "Failed importing java Math class in ScriptEngine!", ex);
+            }
+        }
+        return null;
+    }
+
+    static {
+        final ScriptEngine script_engine = SCRIPT_EM.getEngineByName(SCRIPT_ENGINE_NAME);
+        if (script_engine == null) {
+            LOGGER.log(Level.WARNING, "The {0} engine is not found!", SCRIPT_ENGINE_NAME);
+            SCRIPT_ENGINE = null;
+        } else {
+            if (script_engine.getFactory().getParameter(THREADING_PROPERTY) == null) {
+                LOGGER.log(Level.WARNING, "The {0} engine is not multi-threaded!", SCRIPT_ENGINE_NAME);
+                SCRIPT_ENGINE = null;
+            } else {
+                SCRIPT_ENGINE = import_java_math(script_engine);
+            }
+        }
+    }
 
     //Stores the grammar provider
     private final GrammarProvider m_provider;
@@ -121,10 +165,8 @@ public class FunctExpr extends Expression {
                 new Object[]{desc, m_func, m_sign});
 
         m_is_plc = m_func.equals(FIRST_VAR_NAM_STR);
-        m_is_b_plc = m_is_plc
-                && (m_sign.equals(VarExpr.ENTRY_VAR_STR)
-                || m_sign.equals(BConstExpr.ENTRY_CBOOL_STR)
-                || m_sign.equals(NConstExpr.ENTRY_CNUM_STR));
+        //The basic placement node is a placement node for a terminal node
+        m_is_b_plc = m_is_plc && TermExpr.is_term_type(m_sign);
     }
 
     /**
@@ -524,5 +566,74 @@ public class FunctExpr extends Expression {
             ++idx;
         }
         return func;
+    }
+
+    @Override
+    public Expression optimize() {
+        //Stores the result
+        Expression result = this;
+
+        //First of all check if the engine is available
+        final ScriptEngine script_enj;
+        if (SCRIPT_ENGINE == null) {
+            script_enj = import_java_math(SCRIPT_EM.getEngineByName(SCRIPT_ENGINE_NAME));
+        } else {
+            script_enj = SCRIPT_ENGINE;
+        }
+
+        //If not then no optimizations are possible
+        if (script_enj != null) {
+            //If this is a constant expression then we can optimize
+            if (this.is_const()) {
+                //Use the engine to compute the constant value
+                try {
+                    //Get the java expression
+                    final String java_expr = this.serialize() + ";";
+                    //Evaluate it via script engine
+                    final Object value = script_enj.eval(java_expr);
+                    //Take the result, detect its type and make an expression of
+                    if (value instanceof Double) {
+                        result = DConstExpr.make_const(
+                                Grammar.NUM_ENTRY_TYPE_STR, (Double) value);
+                    } else {
+                        if (value instanceof Float) {
+                            result = FConstExpr.make_const(
+                                    Grammar.NUM_ENTRY_TYPE_STR, (Float) value);
+                        } else {
+                            if (value instanceof Boolean) {
+                                result = BConstExpr.make_const(
+                                        Grammar.BOOL_ENTRY_TYPE_STR, (Boolean) value);
+                            } else {
+                                LOGGER.log(Level.SEVERE,
+                                        "Unable to detect the {0} object type!", value);
+                            }
+                        }
+                    }
+                } catch (ScriptException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed evaluating expression!", ex);
+                }
+            } else {
+                //For non-constant expression create optimize children
+                List<Expression> new_child = new ArrayList();
+                for (int idx = 0; idx < m_child.size(); ++idx) {
+                    final Expression child = m_child.get(idx);
+                    new_child.add(child.optimize());
+                }
+                m_child = new_child;
+            }
+        }
+
+        //If this node does not change return it
+        return result;
+    }
+
+    @Override
+    public boolean is_const() {
+        for (Expression child : m_child) {
+            if (!child.is_const()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

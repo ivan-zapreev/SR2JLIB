@@ -202,8 +202,8 @@ public abstract class Expression {
     public abstract boolean is_placement();
 
     /**
-     * Allows to check if the node is a basic placement one. I.e. it
-     * puts a basic terminal type into another one via a functional.
+     * Allows to check if the node is a basic placement one. I.e. it puts a
+     * basic terminal type into another one via a functional.
      *
      * @return true if the node is a basic placement node
      */
@@ -225,4 +225,24 @@ public abstract class Expression {
      * @return a textual representation of the given expression
      */
     public abstract String to_text();
+
+    /**
+     * Allows to compute an optimized copy of the given expression.
+     *
+     * @return a new expression if the current node can be optimized or the same
+     * object with optimized sub-nodes
+     */
+    public abstract Expression optimize();
+
+    /**
+     * Allows to check if this is a constant expression.
+     *
+     * The check is not exact, i.e. each expression indicated as a constant one
+     * must be constant, the ones which are indicated as non-constant may still
+     * be constant.
+     *
+     * @return true if the expression is definitely identified as constant,
+     * false otherwise
+     */
+    public abstract boolean is_const();
 }

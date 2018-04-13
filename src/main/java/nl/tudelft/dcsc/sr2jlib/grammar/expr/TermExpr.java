@@ -21,7 +21,9 @@
  */
 package nl.tudelft.dcsc.sr2jlib.grammar.expr;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,13 +45,36 @@ public abstract class TermExpr<ValueType> extends Expression {
     protected ValueType m_value;
     private static final int[] MIN_MAX_VALUES = new int[]{1, 1};
 
+    private static final Set<String> term_types = new HashSet<>();
+
+    /**
+     * Allows to test whether the given expression type is a terminal one
+     *
+     * @param expr_type the expression type to be tested
+     * @return true if this is a terminal expression type, otherwise false
+     */
+    public static boolean is_term_type(final String expr_type) {
+        return term_types.contains(expr_type);
+    }
+
+    /**
+     * Allows to register terminal type
+     *
+     * @param term_type terminal type name
+     */
+    private static void register_term_type(final String term_type) {
+        term_types.add(term_type);
+    }
+
     /**
      * The basic constructor
      *
      * @param expr_type the expression type
+     * @param term_type the basic constant expression type
      */
-    public TermExpr(final String expr_type) {
+    public TermExpr(final String expr_type, final String term_type) {
         super(expr_type);
+        register_term_type(term_type);
     }
 
     /**
@@ -153,6 +178,21 @@ public abstract class TermExpr<ValueType> extends Expression {
     @Override
     public boolean is_max_size_inf() {
         return false;
+    }
+
+    @Override
+    public Expression optimize() {
+        return this;
+    }
+
+    @Override
+    public String to_text() {
+        return this.serialize();
+    }
+
+    @Override
+    public boolean is_equal_funct(Expression expr) {
+        return this.getClass().isInstance(expr);
     }
 
 }

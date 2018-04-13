@@ -24,36 +24,36 @@ package nl.tudelft.dcsc.sr2jlib.grammar.expr;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Boolean constant expression
+ * Double constant expression
  *
  * @author Dr. Ivan S. Zapreev
  */
-public class BConstExpr extends ConstExpr<Boolean> {
+public class DConstExpr extends ConstExpr<Double> {
 
     /**
-     * The character representing the boolean constant entry
+     * The character representing the numeric constant entry
      */
-    public static final String ENTRY_CBOOL_STR = "L";
+    public static final String ENTRY_CDOUBLE_STR = "D";
 
     /**
      * The basic constructor
      *
      * @param expr_type the expression type
      */
-    public BConstExpr(final String expr_type) {
-        super(expr_type, ENTRY_CBOOL_STR);
+    public DConstExpr(final String expr_type) {
+        super(expr_type, ENTRY_CDOUBLE_STR);
     }
 
     /**
-     * Allows to instantiate a materialized boolean constant with the given
+     * Allows to instantiate a materialized numerical constant with the given
      * constant value.
      *
      * @param expr_type the expression type
      * @param value the value to be stored
-     * @return the created and materialized boolean constant
+     * @return the created and materialized numerical constant
      */
-    public static BConstExpr make_const(final String expr_type, final boolean value) {
-        BConstExpr expr = new BConstExpr(expr_type);
+    public static DConstExpr make_const(final String expr_type, final double value) {
+        DConstExpr expr = new DConstExpr(expr_type);
         expr.m_value = value;
         return expr;
     }
@@ -61,29 +61,33 @@ public class BConstExpr extends ConstExpr<Boolean> {
     /**
      * The copy constructor
      *
-     * @param other the boolean constant to copy from
+     * @param other the numeric constant to copy from
      */
-    protected BConstExpr(final BConstExpr other) {
+    protected DConstExpr(final DConstExpr other) {
         super(other);
     }
 
     @Override
     public void materialize(int max_size) {
-        m_value = ThreadLocalRandom.current().nextBoolean();
+        m_value = (ThreadLocalRandom.current().nextBoolean() ? 1.0d : -1.0d)
+                * (ThreadLocalRandom.current().nextDouble()
+                //Add the minimum value some times in order to get value >=1
+                + (ThreadLocalRandom.current().nextBoolean() ? 0.0d : Double.MIN_VALUE));
     }
 
     @Override
     public synchronized Expression duplicate() {
-        return new BConstExpr(this);
+        return new DConstExpr(this);
     }
 
     @Override
     public String serialize() {
-        return Boolean.toString(m_value);
+        final String value = Double.toString(m_value);
+        return m_value < 0.0 ? "(" + value + ")" : value;
     }
 
     @Override
     public String toString() {
-        return ENTRY_CBOOL_STR;
+        return ENTRY_CDOUBLE_STR;
     }
 }

@@ -77,6 +77,10 @@ public class ProcessManagerConfig extends BreedingManagerConfig {
      * @param sel_type the individual's selection type
      * @param is_allow_dying if true then individuals are dying after they had a
      * certain number of children
+     * @param is_avoid_equal if true then the children what are equally fit to
+     * their parent will be attempted to be settled into their parent's
+     * position. This shall prevent spreading of the equally fit children with
+     * meaningless mutations.
      * @param min_chld_cnt the minimum number of children before dying
      * @param max_chld_cnt the maximum number of children before dying
      * @param observer the fitness observer instance to monitor the population
@@ -92,13 +96,16 @@ public class ProcessManagerConfig extends BreedingManagerConfig {
             final int ch_sp_x, final int ch_sp_y,
             final SelectionType sel_type,
             final boolean is_allow_dying,
+            final boolean is_avoid_equal,
             final int min_chld_cnt,
             final int max_chld_cnt,
             final GridObserver observer,
             final FinishedCallback done_cb
-            ) {
-        super(mgr_id, num_dofs, size_x, size_y, ch_sp_x, ch_sp_y,
-                sel_type, is_allow_dying, min_chld_cnt, max_chld_cnt);
+    ) {
+        super(mgr_id, num_dofs, size_x, size_y,
+                ch_sp_x, ch_sp_y, sel_type,
+                is_allow_dying, is_avoid_equal,
+                min_chld_cnt, max_chld_cnt);
         this.m_done_cb = done_cb;
         this.m_observer = observer;
         this.m_init_pop_mult = init_pop_mult;

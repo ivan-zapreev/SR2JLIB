@@ -262,6 +262,15 @@ public class Individual {
     }
 
     /**
+     * Allows to optimize the internal expressions
+     */
+    public final void optimize() {
+        for (int idx = 0; idx < m_exps.length; ++idx) {
+            m_exps[idx] = m_exps[idx].optimize();
+        }
+    }
+
+    /**
      * Allows to get expressions representing this individual.
      *
      * @return copies of expressions representing this individual

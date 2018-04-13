@@ -24,7 +24,8 @@ package nl.tudelft.dcsc.sr2jlib.grammar;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.VarExpr;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.BConstExpr;
-import nl.tudelft.dcsc.sr2jlib.grammar.expr.NConstExpr;
+import nl.tudelft.dcsc.sr2jlib.grammar.expr.FConstExpr;
+import nl.tudelft.dcsc.sr2jlib.grammar.expr.DConstExpr;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.FunctExpr;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.TermExpr;
 import java.util.ArrayList;
@@ -238,8 +239,10 @@ public class Grammar implements GrammarProvider {
         //type name whereas the expression type is set to be the most general
         //expression type this is done for the sake of being able to replace
         //the terminal node in the tree with a non-terminal node
-        m_entries.put(NConstExpr.ENTRY_CNUM_STR,
-                new DefGrammarEntry(NConstExpr.ENTRY_CNUM_STR, new NConstExpr(NUM_ENTRY_TYPE_STR)));
+        m_entries.put(DConstExpr.ENTRY_CDOUBLE_STR,
+                new DefGrammarEntry(DConstExpr.ENTRY_CDOUBLE_STR, new DConstExpr(NUM_ENTRY_TYPE_STR)));
+        m_entries.put(FConstExpr.ENTRY_CFLOAT_STR,
+                new DefGrammarEntry(FConstExpr.ENTRY_CFLOAT_STR, new FConstExpr(NUM_ENTRY_TYPE_STR)));
         m_entries.put(BConstExpr.ENTRY_CBOOL_STR,
                 new DefGrammarEntry(BConstExpr.ENTRY_CBOOL_STR, new BConstExpr(BOOL_ENTRY_TYPE_STR)));
         m_entries.put(VarExpr.ENTRY_VAR_STR,
