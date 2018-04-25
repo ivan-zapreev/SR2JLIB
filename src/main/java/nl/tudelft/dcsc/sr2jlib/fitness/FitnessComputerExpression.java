@@ -28,7 +28,7 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
  * The fitness computer abstract class to compute fitness based on the vector of
  * expression trees
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public abstract class FitnessComputerExpression {
 

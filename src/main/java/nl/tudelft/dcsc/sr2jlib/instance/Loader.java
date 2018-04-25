@@ -36,7 +36,7 @@ import java.util.logging.Logger;
  * it is solely targeting the individual classes. I.e. we expect the loadClass
  * method NOT to be called recursively!
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class Loader extends ClassLoader {
 

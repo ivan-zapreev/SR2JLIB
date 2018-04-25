@@ -26,10 +26,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * Represents a grammar entry interface
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 interface GrammarEntry {
 

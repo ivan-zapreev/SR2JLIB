@@ -24,7 +24,7 @@ package nl.tudelft.dcsc.sr2jlib.grammar.expr;
 /**
  * Represents the constant terminal expression
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  * @param <ValueType> the value type Boolean, Double ...
  */
 public abstract class ConstExpr<ValueType> extends TermExpr<ValueType> {
@@ -46,10 +46,5 @@ public abstract class ConstExpr<ValueType> extends TermExpr<ValueType> {
      */
     protected ConstExpr(final ConstExpr other) {
         super(other);
-    }
-
-    @Override
-    public boolean is_const() {
-        return true;
     }
 }

@@ -24,7 +24,7 @@ package nl.tudelft.dcsc.sr2jlib.err;
 /**
  * This interface represents
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public interface ErrorListener {
 

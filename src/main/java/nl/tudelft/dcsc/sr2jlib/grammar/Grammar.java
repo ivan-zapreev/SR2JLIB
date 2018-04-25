@@ -31,10 +31,12 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.TermExpr;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,7 +44,7 @@ import java.util.logging.Logger;
 /**
  * Represents the GP grammar storing class
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class Grammar implements GrammarProvider {
 
@@ -517,8 +519,8 @@ public class Grammar implements GrammarProvider {
      * @return the chosen node
      */
     private Expression pick_up_node(final Expression mutant) {
-        final List<Expression> nterm = new ArrayList();
-        final List<Expression> term = new ArrayList();
+        final List<Expression> nterm = new ArrayList<>();
+        final List<Expression> term = new ArrayList<>();
         mutant.get_nodes(nterm, term);
         //Give a certain chance for terminan v.s. non-temrinal nodes
         if ((ThreadLocalRandom.current().nextFloat() < m_tm_vs_ntm) || nterm.isEmpty()) {
@@ -560,8 +562,10 @@ public class Grammar implements GrammarProvider {
         LOGGER.log(Level.FINE, "Is change : {0}", is_change);
         if (is_change) {
             mutant = change(tmn, mutant);
+            //assert_unique("change", mutant);
         } else {
             mutant = replace(tmn, mutant);
+            //assert_unique("replace", mutant);
         }
 
         LOGGER.log(Level.FINE, "Obtained size: {0} expression: {1}",

@@ -25,7 +25,7 @@ package nl.tudelft.dcsc.sr2jlib;
  * The functional interface used to notify the user class that the process
  * manager has finished. I.e. the symbolic regression has stopped.
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 @FunctionalInterface
 public interface FinishedCallback {

@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  * based on a discrete probability distribution defined by the element
  * expression weights.
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 class Randomizer {
 

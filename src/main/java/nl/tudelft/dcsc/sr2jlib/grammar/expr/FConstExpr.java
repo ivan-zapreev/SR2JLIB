@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Float constant expression
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class FConstExpr extends ConstExpr<Float> {
 
@@ -81,9 +81,14 @@ public class FConstExpr extends ConstExpr<Float> {
     }
 
     @Override
+    protected boolean is_bsafe_expr() {
+        return (m_value >= 0.0);
+    }
+
+    @Override
     public String serialize() {
-        final String value = Float.toString(m_value);
-        return m_value < 0.0 ? "(" + value + ")" : value;
+        //Prevent -0.0 from happening
+        return Float.toString((m_value == 0.0f) ? 0.0f : m_value);
     }
 
     @Override

@@ -34,7 +34,7 @@ import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
 /**
  * Represents the individual
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class Individual {
 

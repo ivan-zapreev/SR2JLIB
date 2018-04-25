@@ -36,7 +36,7 @@ import java.util.stream.IntStream;
 /**
  * This is a population manager class responsible for managing the GP process
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class ProcessManager {
 

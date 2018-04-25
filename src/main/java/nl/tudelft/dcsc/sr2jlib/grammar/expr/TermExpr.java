@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 /**
  * Represents the terminal expression
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  * @param <ValueType> the value type Boolean, Double ...
  */
 public abstract class TermExpr<ValueType> extends Expression {
@@ -160,6 +160,11 @@ public abstract class TermExpr<ValueType> extends Expression {
         return true;
     }
 
+    @Override
+    protected boolean is_bsafe_expr() {
+        return true;
+    }
+    
     @Override
     final public boolean is_placement() {
         return false;

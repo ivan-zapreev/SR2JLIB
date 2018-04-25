@@ -26,7 +26,7 @@ import nl.tudelft.dcsc.sr2jlib.grid.AreaLockerConfig;
 /**
  * The configuration class for the @see BreedingManager
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class BreedingManagerConfig extends AreaLockerConfig {
 

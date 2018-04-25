@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * The standard interface to observe the population manager
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public interface GridObserver {
 

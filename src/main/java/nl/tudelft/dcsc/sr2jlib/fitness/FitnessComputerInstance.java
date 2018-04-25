@@ -30,8 +30,10 @@ import nl.tudelft.dcsc.sr2jlib.instance.Creator;
 import nl.tudelft.dcsc.sr2jlib.instance.Loader;
 
 /**
+ * The fitness computer class to be derived from when on needs to compute
+ * fitness based on the individual implementing method.
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public abstract class FitnessComputerInstance extends FitnessComputerClass {
 

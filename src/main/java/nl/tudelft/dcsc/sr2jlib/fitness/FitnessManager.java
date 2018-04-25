@@ -18,10 +18,9 @@
 package nl.tudelft.dcsc.sr2jlib.fitness;
 
 /**
- * 
  * The singleton class for storing the fitness computer instance
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class FitnessManager {
     

@@ -32,7 +32,7 @@ import java.util.logging.Logger;
  * This class allows to lock the area around individuals while the reproduction
  * happens
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class AreaLocker {
 

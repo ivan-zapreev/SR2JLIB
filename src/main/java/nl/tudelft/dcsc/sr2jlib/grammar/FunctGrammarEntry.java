@@ -34,7 +34,7 @@ import java.util.logging.Logger;
  * This is the grammar entry class storing all the required info of the given
  * entry
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 class FunctGrammarEntry implements GrammarEntry {
 
@@ -210,7 +210,7 @@ class FunctGrammarEntry implements GrammarEntry {
             rnd = new Randomizer();
             rands.put(exp.get_min_size(), rnd);
         }
-        LOGGER.log(Level.INFO, "Registering min size: {0}, "
+        LOGGER.log(Level.FINE, "Registering min size: {0}, "
                 + "expression: {1}, weight: {2}  ",
                 new Object[]{exp.get_min_size(), exp, weight});
         rnd.register(exp, weight);
@@ -315,7 +315,7 @@ class FunctGrammarEntry implements GrammarEntry {
             curr.get_ivls().forEach((ivl) -> {
                 final Expression exp = ivl.get_exp();
                 if (exp.is_max_size_inf()) {
-                    LOGGER.log(Level.INFO, "Adding expression {0} to "
+                    LOGGER.log(Level.FINE, "Adding expression {0} to "
                             + " inf max size level!", exp);
                     max_rnd.register(exp, ivl.get_weight());
                 }

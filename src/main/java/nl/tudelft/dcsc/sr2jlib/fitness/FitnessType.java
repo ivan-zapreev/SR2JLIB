@@ -24,7 +24,7 @@ package nl.tudelft.dcsc.sr2jlib.fitness;
 /**
  * Defines the fitness type
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public enum FitnessType {
 

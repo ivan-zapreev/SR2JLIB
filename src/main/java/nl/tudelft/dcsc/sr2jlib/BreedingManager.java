@@ -38,7 +38,7 @@ import nl.tudelft.dcsc.sr2jlib.err.ErrorManager;
  * The population grid manager class that allows to perform genetic breeding of
  * the population of the grid.
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class BreedingManager {
 

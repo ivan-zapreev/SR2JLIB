@@ -40,7 +40,7 @@ import javax.tools.ToolProvider;
  * http://www.beyondlinux.com/2011/07/20/3-steps-to-dynamically-compile-instantiate-and-run-a-java-class/
  * It is used to compile an individual class for performing its fitness check
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class Creator {
 

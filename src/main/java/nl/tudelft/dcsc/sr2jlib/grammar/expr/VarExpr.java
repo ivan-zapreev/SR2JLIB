@@ -27,14 +27,14 @@ import nl.tudelft.dcsc.sr2jlib.instance.Creator;
 /**
  * Variable expression
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class VarExpr extends TermExpr<Integer> {
 
     /**
      * The character representing the variable name prefix
      */
-    public static final String VAR_NAME_PREFIX_STR = "x";
+    private static final String ARG_NAME_PREF_STR = "y";
 
     /**
      * The character representing the variable entry
@@ -89,16 +89,11 @@ public class VarExpr extends TermExpr<Integer> {
 
     @Override
     public String to_text() {
-        return VAR_NAME_PREFIX_STR + m_value;
+        return ARG_NAME_PREF_STR + m_value;
     }
 
     @Override
     public String toString() {
         return ENTRY_VAR_STR;
-    }
-
-    @Override
-    public boolean is_const() {
-        return false;
     }
 }

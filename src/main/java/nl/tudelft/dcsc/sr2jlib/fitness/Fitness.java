@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 /**
  * The class that will be used for storing the fitness values
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class Fitness {
 

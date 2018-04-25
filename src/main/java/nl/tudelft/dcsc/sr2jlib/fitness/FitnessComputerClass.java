@@ -32,7 +32,7 @@ import nl.tudelft.dcsc.sr2jlib.instance.Loader;
 /**
  * The fitness computer interface
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public abstract class FitnessComputerClass extends FitnessComputerString {
 
@@ -76,7 +76,7 @@ public abstract class FitnessComputerClass extends FitnessComputerString {
             LOGGER.log(Level.SEVERE, msg, ex);
             ErrorManager.error(msg, ex);
         }
-        LOGGER.log(Level.INFO, "Generated {0}: {1}, fitness: {2}",
+        LOGGER.log(Level.FINE, "Generated {0}: {1}, fitness: {2}",
                 new Object[]{class_name, Arrays.toString(exp_strs), ftn});
         return ftn;
     }

@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 /**
  * Represents the default grammar entry
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 class DefGrammarEntry implements GrammarEntry {
 

@@ -25,10 +25,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
  * A stub implementation of the error listener
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class ErrorListenerStub implements ErrorListener {
 

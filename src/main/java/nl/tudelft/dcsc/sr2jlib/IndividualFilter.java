@@ -22,7 +22,7 @@ import nl.tudelft.dcsc.sr2jlib.grid.Individual;
 /**
  * This interface is to be implemented by the class
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 @FunctionalInterface
 public interface IndividualFilter {

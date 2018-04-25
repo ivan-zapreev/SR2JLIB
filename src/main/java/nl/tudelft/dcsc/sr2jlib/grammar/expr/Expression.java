@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Represents and expression class, both boolean and numeric
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public abstract class Expression {
 
@@ -185,13 +185,24 @@ public abstract class Expression {
     public abstract boolean is_equal_funct(Expression expr);
 
     /**
-     * Allows to check if the node is a terminal one. I.e. a terminal node or if
-     * it is a simple functional which just encapsulates a terminal node. NOTE:
-     * Is only valid after node materialization.
+     * Allows to check if the node is a terminal one.
+     *
+     * The result is true if one of the next holds: (i) a terminal node; (ii) a
+     * placement node whose only child is a terminal node
+     *
+     * NOTE: Is only valid after node materialization.
      *
      * @return true if the node is terminal
      */
     protected abstract boolean is_terminal();
+
+    /**
+     * Allows to indicate whether the expression is brackets safe. I.e. can be
+     * used without brackets without causing any execution problems.
+     *
+     * @return true if the expression is brackets safe
+     */
+    protected abstract boolean is_bsafe_expr();
 
     /**
      * Allows to check if the node is a placement one. I.e. it puts one type
@@ -233,16 +244,4 @@ public abstract class Expression {
      * object with optimized sub-nodes
      */
     public abstract Expression optimize();
-
-    /**
-     * Allows to check if this is a constant expression.
-     *
-     * The check is not exact, i.e. each expression indicated as a constant one
-     * must be constant, the ones which are indicated as non-constant may still
-     * be constant.
-     *
-     * @return true if the expression is definitely identified as constant,
-     * false otherwise
-     */
-    public abstract boolean is_const();
 }

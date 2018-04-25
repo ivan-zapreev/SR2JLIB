@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * Double constant expression
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class DConstExpr extends ConstExpr<Double> {
 
@@ -81,9 +81,14 @@ public class DConstExpr extends ConstExpr<Double> {
     }
 
     @Override
+    protected boolean is_bsafe_expr() {
+        return (m_value >= 0.0);
+    }
+
+    @Override
     public String serialize() {
-        final String value = Double.toString(m_value);
-        return m_value < 0.0 ? "(" + value + ")" : value;
+        //Prevent -0.0 from happening
+        return Double.toString((m_value == 0.0) ? 0.0 : m_value);
     }
 
     @Override

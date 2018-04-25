@@ -24,7 +24,7 @@ package nl.tudelft.dcsc.sr2jlib.grid;
 /**
  * The @see AreaLocker configuration object
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class AreaLockerConfig {
 

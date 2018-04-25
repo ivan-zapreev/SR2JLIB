@@ -24,14 +24,13 @@ package nl.tudelft.dcsc.sr2jlib.grammar;
 import nl.tudelft.dcsc.sr2jlib.grammar.expr.Expression;
 
 /**
- *
  * Stores the methods required for the
  *
  * @see nl.tudelft.dcsc.sr2jlib.grammar.expr.FunctExpr
  *
  * class to provide Grammar related methods
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public interface GrammarProvider {
 

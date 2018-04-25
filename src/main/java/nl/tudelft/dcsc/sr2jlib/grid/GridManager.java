@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
  *
  * Is the population grid class that stores the current population
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class GridManager {
 

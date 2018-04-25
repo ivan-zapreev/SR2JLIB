@@ -36,7 +36,7 @@ import nl.tudelft.dcsc.sr2jlib.grammar.GrammarProvider;
 /**
  * Represents a functional expression of any type
  *
- * @author Dr. Ivan S. Zapreev
+ * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class FunctExpr extends Expression {
 
@@ -44,8 +44,10 @@ public class FunctExpr extends Expression {
     private static final Logger LOGGER = Logger.getLogger(FunctExpr.class.getName());
 
     private static final String VAR_NAME_PREF_STR = "x";
-    private static final String MATH_PREFIX_REG = "\\$";
-    private static final String MATH_PREFIX_STR = "Math.";
+    private static final String MATH_SYMBOL_REG = "\\$";
+    private static final String MATH_PREFIX_STR = "Math";
+    private static final String MATH_DOT_PREFIX_STR = MATH_PREFIX_STR + ".";
+    private static final String MATH_DOT_PREFIX_REG = MATH_PREFIX_STR + "\\.";
     private static final String WHITE_SPACE_REG = "\\s+";
     private static final String SIGN_ARG_DELIM_REG = ",";
     private static final char OPEN_FUNC_CHAR = '[';
@@ -61,6 +63,29 @@ public class FunctExpr extends Expression {
     private static final String THREADING_PROPERTY = "THREADING";
     private static final String IMPORT_JAVA_MATH_CLASS_SRT = "var Math = Java.type(\"java.lang.Math\");";
     private static ScriptEngine SCRIPT_ENGINE;
+
+    //Stores the bracket safe expressions argument regular expression
+    private static final String BSAFE_EXPR_ARG_REG = "[\\w\\-\\+\\/\\>\\<\\=\\!\\:\\?\\.\\&\\|\\[\\]]*";
+    //Stores the bracket safe expressions regular expression
+    private static final String BSAFE_EXPR_REG = MATH_DOT_PREFIX_REG + "\\w*\\("
+            + BSAFE_EXPR_ARG_REG + "(," + BSAFE_EXPR_ARG_REG + ")*\\)";
+    //Stores the pattern for the bracket safe expressions
+    private static final Pattern BSAFE_EXPR_PATTERN = Pattern.compile(BSAFE_EXPR_REG);
+
+    /**
+     * This interface is used for node representation as a string
+     */
+    @FunctionalInterface
+    private interface ToString {
+
+        /**
+         * Allows to convert an expression to some of its string representations
+         *
+         * @param node the expression node to be converted
+         * @return the string representation of the node
+         */
+        public String to_string(Expression child);
+    }
 
     /**
      * Allows to import java.lang.Math for being used in expressions into the
@@ -103,7 +128,7 @@ public class FunctExpr extends Expression {
     //Stores the operation signature types
     private final String m_sign;
     //Stores the list of children, once materialized
-    private List<Expression> m_child;
+    private List<Expression> m_children;
     //Stores the array of sgnature tokens
     private final String[] m_arg_types;
     //Stores the number of argument occurences in the function
@@ -144,7 +169,7 @@ public class FunctExpr extends Expression {
         this.m_min_size = 0;
         this.m_max_size = 0;
         this.m_node_size = 0;
-        this.m_child = new ArrayList();
+        this.m_children = new ArrayList();
         //It can happen that there is no arguments for the functional expression,
         //then just make a zero length array to keep things rolling. (ToDo: make a separate type?)
         this.m_arg_types = (m_sign.isEmpty() ? new String[0] : m_sign.split(SIGN_ARG_DELIM_REG));
@@ -186,8 +211,8 @@ public class FunctExpr extends Expression {
             final Expression x2, final String x2_type) {
         FunctExpr expr = new FunctExpr(null, expr_type,
                 "[x1" + op + "x2](" + x1_type + "," + x2_type + ")");
-        expr.m_child.add(x1);
-        expr.m_child.add(x2);
+        expr.m_children.add(x1);
+        expr.m_children.add(x2);
         return expr;
     }
 
@@ -243,7 +268,7 @@ public class FunctExpr extends Expression {
      * @return the resulting string
      */
     private String add_math(final String func) {
-        return func.replaceAll(MATH_PREFIX_REG, MATH_PREFIX_STR);
+        return func.replaceAll(MATH_SYMBOL_REG, MATH_DOT_PREFIX_STR);
     }
 
     /**
@@ -266,10 +291,10 @@ public class FunctExpr extends Expression {
         this.m_provider = other.m_provider;
         this.m_func = other.m_func;
         this.m_sign = other.m_sign;
-        this.m_child = new ArrayList();
+        this.m_children = new ArrayList();
         //Iterate over children and clone them
-        other.m_child.forEach((child) -> {
-            this.m_child.add(child.duplicate());
+        other.m_children.forEach((child) -> {
+            this.m_children.add(child.duplicate());
         });
         this.m_arg_types = other.m_arg_types;
         this.m_min_size = other.m_min_size;
@@ -288,19 +313,19 @@ public class FunctExpr extends Expression {
         } else {
             nterm.add(this);
         }
-        m_child.forEach((child) -> {
+        m_children.forEach((child) -> {
             child.get_nodes(nterm, term);
         });
     }
 
     @Override
     public boolean replace_node(Expression from, Expression to) {
-        for (int idx = 0; idx < m_child.size(); ++idx) {
-            Expression child = m_child.get(idx);
+        for (int idx = 0; idx < m_children.size(); ++idx) {
+            Expression child = m_children.get(idx);
             LOGGER.log(Level.FINE, "Considering child node {0}", child);
             if (child == from) {
                 LOGGER.log(Level.FINE, "The node is found!", child);
-                m_child.set(idx, to);
+                m_children.set(idx, to);
                 return true;
             } else {
                 if (child instanceof FunctExpr) {
@@ -319,21 +344,21 @@ public class FunctExpr extends Expression {
      * @param donor the donor node
      */
     public void move_children(FunctExpr donor) {
-        this.m_child = donor.m_child;
-        donor.m_child = null;
+        this.m_children = donor.m_children;
+        donor.m_children = null;
     }
 
     @Override
     public boolean emplace_funct(Expression from, Expression to) {
-        for (int idx = 0; idx < m_child.size(); ++idx) {
-            Expression child = m_child.get(idx);
+        for (int idx = 0; idx < m_children.size(); ++idx) {
+            Expression child = m_children.get(idx);
             LOGGER.log(Level.FINE, "Considering child node {0}", child);
             if (child == from) {
                 LOGGER.log(Level.FINE, "The node is found!", child);
-                m_child.set(idx, to);
+                m_children.set(idx, to);
                 //Copy the children
-                ((FunctExpr) to).m_child = ((FunctExpr) from).m_child;
-                ((FunctExpr) from).m_child = null;
+                ((FunctExpr) to).m_children = ((FunctExpr) from).m_children;
+                ((FunctExpr) from).m_children = null;
                 return true;
             } else {
                 if (child instanceof FunctExpr) {
@@ -351,7 +376,7 @@ public class FunctExpr extends Expression {
         if ((m_node_size == 0) || is_re_compute) {
             //Do not count the size of the placement nodes as they do not change the function
             m_node_size = NODE_SIZE_1;
-            m_child.forEach((child) -> {
+            m_children.forEach((child) -> {
                 m_node_size += child.get_size();
             });
         }
@@ -457,7 +482,7 @@ public class FunctExpr extends Expression {
             //Materialize the expression with the chosen size
             exp.materialize(arg_size);
             //Add the expression into the list of children
-            m_child.add(exp);
+            m_children.add(exp);
         }
     }
 
@@ -468,7 +493,7 @@ public class FunctExpr extends Expression {
      * @return the children nodes of this expression
      */
     public List<Expression> get_children() {
-        return m_child;
+        return m_children;
     }
 
     /**
@@ -504,23 +529,10 @@ public class FunctExpr extends Expression {
 
     @Override
     public String serialize() {
-        String func = m_func;
-        int idx = FIRST_VAR_IDX;
-        for (Expression child : m_child) {
-            final String child_str = child.serialize();
-            final String var_str = VAR_NAME_PREF_STR + idx;
-            func = func.replaceAll(bb(var_str), bb(child_str));
-            func = func.replaceAll(bc(var_str), bc(child_str));
-            func = func.replaceAll(cc(var_str), cc(child_str));
-            func = func.replaceAll(cb(var_str), cb(child_str));
-            if (child.is_terminal() || child.is_placement()) {
-                func = func.replaceAll(var_str, child_str);
-            } else {
-                func = func.replaceAll(var_str, bb(child_str));
-            }
-            ++idx;
-        }
-        return func;
+        return to_string(m_func,
+                (child) -> {
+                    return child.serialize();
+                });
     }
 
     @Override
@@ -538,7 +550,13 @@ public class FunctExpr extends Expression {
 
     @Override
     final protected boolean is_terminal() {
-        return m_sign.isEmpty();
+        return m_sign.isEmpty()
+                || (this.is_placement() && m_children.get(0).is_terminal());
+    }
+
+    @Override
+    protected boolean is_bsafe_expr() {
+        return BSAFE_EXPR_PATTERN.matcher(m_func).matches();
     }
 
     @Override
@@ -551,14 +569,23 @@ public class FunctExpr extends Expression {
         return m_is_b_plc;
     }
 
-    @Override
-    public String to_text() {
-        String func = m_func.replaceAll(MATH_PREFIX_STR, "");
+    /**
+     * Allows to convert this expression node to a string with the given
+     * converter for child nodes
+     *
+     * @param conver the converter to be used for child nodes
+     * @return the string representation of the given node
+     */
+    private String to_string(String func, final ToString conver) {
         int idx = FIRST_VAR_IDX;
-        for (Expression child : m_child) {
-            final String child_str = child.to_text();
+        for (Expression child : m_children) {
+            final String child_str = conver.to_string(child);
             final String var_str = VAR_NAME_PREF_STR + idx;
-            if (child.is_terminal() || child.is_placement()) {
+            func = func.replaceAll(bb(var_str), bb(child_str));
+            func = func.replaceAll(bc(var_str), bc(child_str));
+            func = func.replaceAll(cc(var_str), cc(child_str));
+            func = func.replaceAll(cb(var_str), cb(child_str));
+            if (child.is_placement() || child.is_bsafe_expr()) {
                 func = func.replaceAll(var_str, child_str);
             } else {
                 func = func.replaceAll(var_str, bb(child_str));
@@ -566,6 +593,53 @@ public class FunctExpr extends Expression {
             ++idx;
         }
         return func;
+    }
+
+    @Override
+    public String to_text() {
+        return to_string(m_func.replaceAll(MATH_DOT_PREFIX_REG, ""),
+                (child) -> {
+                    return child.to_text();
+                });
+    }
+
+    /**
+     * Attempts a brute-force optimization of the expression.
+     *
+     * @param script_enj the script engine to be used
+     * @return true if the optimization was successful
+     */
+    private Expression brute_force_optimize(final ScriptEngine script_enj) {
+        Expression result = null;
+        //Use the engine to compute the constant value
+        try {
+            //Get the java expression
+            final String java_expr = this.serialize() + ";";
+            //Evaluate it via script engine
+            final Object value = script_enj.eval(java_expr);
+            //Take the result, detect its type and make an expression of
+            if (value instanceof Double) {
+                result = DConstExpr.make_const(
+                        Grammar.NUM_ENTRY_TYPE_STR, (Double) value);
+            } else {
+                if (value instanceof Float) {
+                    result = FConstExpr.make_const(
+                            Grammar.NUM_ENTRY_TYPE_STR, (Float) value);
+                } else {
+                    if (value instanceof Boolean) {
+                        result = BConstExpr.make_const(
+                                Grammar.BOOL_ENTRY_TYPE_STR, (Boolean) value);
+                    } else {
+                        LOGGER.log(Level.WARNING,
+                                "Unable to detect the {0} object type!", value);
+                    }
+                }
+            }
+        } catch (ScriptException ex) {
+            LOGGER.log(Level.FINER, "Failed evaluating expression!", ex);
+        }
+
+        return result;
     }
 
     @Override
@@ -583,57 +657,27 @@ public class FunctExpr extends Expression {
 
         //If not then no optimizations are possible
         if (script_enj != null) {
-            //If this is a constant expression then we can optimize
-            if (this.is_const()) {
-                //Use the engine to compute the constant value
-                try {
-                    //Get the java expression
-                    final String java_expr = this.serialize() + ";";
-                    //Evaluate it via script engine
-                    final Object value = script_enj.eval(java_expr);
-                    //Take the result, detect its type and make an expression of
-                    if (value instanceof Double) {
-                        result = DConstExpr.make_const(
-                                Grammar.NUM_ENTRY_TYPE_STR, (Double) value);
-                    } else {
-                        if (value instanceof Float) {
-                            result = FConstExpr.make_const(
-                                    Grammar.NUM_ENTRY_TYPE_STR, (Float) value);
-                        } else {
-                            if (value instanceof Boolean) {
-                                result = BConstExpr.make_const(
-                                        Grammar.BOOL_ENTRY_TYPE_STR, (Boolean) value);
-                            } else {
-                                LOGGER.log(Level.SEVERE,
-                                        "Unable to detect the {0} object type!", value);
-                            }
-                        }
+            //Try the brute force optimization
+            final Expression bf_res = brute_force_optimize(script_enj);
+
+            //If the brute force did not work, try optimizing the children
+            if (bf_res == null) {
+                for (int idx = 0; idx < m_children.size(); ++idx) {
+                    final Expression orig_child = m_children.get(idx);
+                    final Expression opt_child = orig_child.optimize();
+                    if (opt_child != orig_child) {
+                        m_children.set(idx, opt_child);
                     }
-                } catch (ScriptException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed evaluating expression!", ex);
                 }
             } else {
-                //For non-constant expression create optimize children
-                List<Expression> new_child = new ArrayList();
-                for (int idx = 0; idx < m_child.size(); ++idx) {
-                    final Expression child = m_child.get(idx);
-                    new_child.add(child.optimize());
-                }
-                m_child = new_child;
+                result = bf_res;
             }
         }
+
+        LOGGER.log(Level.FINE, "Optimized: {0}\n---into---\n{1}",
+                new Object[]{this.to_text(), result.to_text()});
 
         //If this node does not change return it
         return result;
-    }
-
-    @Override
-    public boolean is_const() {
-        for (Expression child : m_child) {
-            if (!child.is_const()) {
-                return false;
-            }
-        }
-        return true;
     }
 }
