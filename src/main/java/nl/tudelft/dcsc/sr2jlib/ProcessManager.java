@@ -180,6 +180,16 @@ public class ProcessManager {
     }
 
     /**
+     * Allows to get the (breeding) manager id, as provided by the configuration
+     * object during the instantiation.
+     *
+     * @return the breeding manager id
+     */
+    public int get_mgr_id() {
+        return this.m_breeder.get_mgr_id();
+    }
+
+    /**
      * Starts the GP procedure
      */
     public void start() {

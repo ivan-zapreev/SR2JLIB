@@ -115,6 +115,16 @@ public class BreedingManager {
     }
 
     /**
+     * Allows to get the breeding manager id, as provided by the configuration
+     * object during the instantiation.
+     *
+     * @return the breeding manager id
+     */
+    public int get_mgr_id() {
+        return this.m_mgr_id;
+    }
+
+    /**
      * Allows to filter out the individuals using the individual evaluator
      *
      * @param eval the individual evaluator
