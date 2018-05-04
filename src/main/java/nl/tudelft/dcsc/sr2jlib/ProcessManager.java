@@ -42,6 +42,7 @@ public class ProcessManager {
 
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class.getName());
 
+    private boolean m_is_active;
     private final FinishedCallback m_done_cb;
     private final GridObserver m_observer;
     private int m_num_workers;
@@ -57,6 +58,7 @@ public class ProcessManager {
      * @param conf the manger configuration object
      */
     public ProcessManager(final ProcessManagerConfig conf) {
+        this.m_is_active = false;
         this.m_done_cb = conf.m_done_cb;
         this.m_observer = conf.m_observer;
         this.m_init_pop_mult = conf.m_init_pop_mult;
@@ -192,7 +194,10 @@ public class ProcessManager {
     /**
      * Starts the GP procedure
      */
-    public void start() {
+    public synchronized void start() {
+        //Set the activity flag
+        m_is_active = true;
+        
         //Start the observer
         m_observer.start_observing();
 
@@ -204,11 +209,19 @@ public class ProcessManager {
     }
 
     /**
+     * Allows to check if the manager is active (the SR procedure is running)
+     * @return true if the manager is active, otherwise false
+     */
+    public synchronized boolean is_active() {
+        return m_is_active;
+    }
+    
+    /**
      * Allows to stop the population manager
      *
      * @param is_soft if soft then the thread executors are stopped softly
      */
-    public void stop(final boolean is_soft) {
+    public synchronized void stop(final boolean is_soft) {
         //Stop the GP process if it is running
         request_stop();
 
@@ -218,6 +231,9 @@ public class ProcessManager {
         } else {
             m_executor.shutdownNow();
         }
+        
+        //Set the activity flag
+        m_is_active = false;
 
         //Stop the observer
         m_observer.stop_observing();

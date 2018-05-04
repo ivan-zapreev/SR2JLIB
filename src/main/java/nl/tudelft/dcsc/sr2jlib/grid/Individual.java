@@ -243,9 +243,22 @@ public class Individual {
      * @return copies of expressions representing this individual
      */
     public List<Expression> get_expr_list() {
-        List<Expression> result = new ArrayList();
+        List<Expression> result = new ArrayList<>();
         for (int idx = 0; idx < m_exps.length; ++idx) {
             result.add(m_exps[idx].duplicate());
+        }
+        return result;
+    }
+
+    /**
+     * Allows to get expressions string representing this individual
+     *
+     * @return copies of expressions representing this individual
+     */
+    public List<String> get_expr_text() {
+        List<String> result = new ArrayList<>();
+        for (int idx = 0; idx < m_exps.length; ++idx) {
+            result.add(m_exps[idx].to_text().trim());
         }
         return result;
     }
