@@ -48,6 +48,10 @@ public class Creator {
      * The name of the array argument used by the individual dof functions
      */
     public static final String VAR_NAME = "args";
+    /**
+     * The name of the result argument used by the individual dof functions
+     */
+    public static final String RES_NAME = "res";
 
     /**
      * Allows to get the variable name for the variable with the given index.
@@ -68,7 +72,7 @@ public class Creator {
     /**
      * The prefix of the single dof function of the individual
      */
-    public static final String EVALUATE = "evaluate_";
+    public static final String EVALUATE = "evaluate";
 
     //Stores the reference to the logger
     private static final Logger LOGGER = Logger.getLogger(Creator.class.getName());
@@ -144,17 +148,21 @@ public class Creator {
 
     private static InMemoryJavaFileObject getJavaFileObject(final String class_name,
             final String full_name, final String[] funct) {
-        String contents = "package " + PACKAGE_NAME + ";"
-                + "public class " + class_name + " { "
-                + "  public static int " + GET_NUM_DOFS + "(){"
-                + "    return " + funct.length + ";"
-                + "}";
+        String contents = "package " + PACKAGE_NAME + ";\n"
+                + "public class " + class_name + " {\n"
+                + "  public static int " + GET_NUM_DOFS + "(){\n"
+                + "    return " + funct.length + ";\n"
+                + "}\n"
+                + "public static void " + EVALUATE + "\n"
+                + "(\n"
+                + "double[] " + VAR_NAME + ",\n"
+                + "double[] " + RES_NAME + "\n"
+                + "){\n";
         for (int idx = 0; idx < funct.length; ++idx) {
-            contents += "public static double " + EVALUATE + idx + "( double[] " + VAR_NAME + ") {"
-                    + "    return " + funct[idx] + "; "
-                    + "  } ";
+            contents += RES_NAME + "[" + idx + "] = " + funct[idx] + ";\n";
         }
-        contents += "} ";
+        contents += "}\n";
+        contents += "}";
         LOGGER.log(Level.FINE, "{0}: {1}", new Object[]{full_name, contents});
         return new InMemoryJavaFileObject(full_name, contents);
     }
