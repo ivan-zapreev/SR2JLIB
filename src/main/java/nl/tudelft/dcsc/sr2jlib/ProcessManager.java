@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
@@ -39,9 +40,9 @@ import java.util.stream.IntStream;
  * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class ProcessManager {
-
+    
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class.getName());
-
+    
     private boolean m_is_active;
     private final FinishedCallback m_done_cb;
     private final GridObserver m_observer;
@@ -65,9 +66,9 @@ public class ProcessManager {
         this.m_num_workers = conf.m_num_workers;
         this.m_max_num_reps = conf.m_max_num_reps;
         this.m_breeder = new BreedingManager(m_observer, conf);
-
+        
         this.m_num_reps = 0;
-
+        
         final UncaughtExceptionHandler ueh = new UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread th, Throwable ex) {
@@ -76,7 +77,7 @@ public class ProcessManager {
         };
         this.m_executor = Executors.newFixedThreadPool(m_num_workers, new ThreadFactory() {
             private int idx = 0;
-
+            
             @Override
             public Thread newThread(Runnable r) {
                 Thread th = new Thread(r);
@@ -94,16 +95,18 @@ public class ProcessManager {
      * iterations
      */
     private class GpWorkerTask implements Runnable {
-
+        
         GpWorkerTask(final int idx) {
             super();
             LOGGER.log(Level.FINE, "Worker {0} created!", idx);
         }
-
+        
         @Override
         public void run() {
-            LOGGER.log(Level.FINE, "{0} -> Thread started!", Thread.currentThread().getName());
-
+            LOGGER.log(Level.INFO, "Process Manager {0} -> Thread {1} started!",
+                    new Object[]{ProcessManager.this.get_mgr_id(),
+                        Thread.currentThread().getName()});
+            
             final List<Individual> inds = new ArrayList();
             try {
                 //Generate initial population
@@ -129,8 +132,10 @@ public class ProcessManager {
             } catch (Throwable ex) {
                 LOGGER.log(Level.SEVERE, "Exception in a GP worker, premature finish!", ex);
             }
-
-            LOGGER.log(Level.FINE, "{0} -> Thread finished!", Thread.currentThread().getName());
+            
+            LOGGER.log(Level.INFO, "Process Manager {0} -> Thread {1} finished!",
+                    new Object[]{ProcessManager.this.get_mgr_id(),
+                        Thread.currentThread().getName()});
 
             //Notify that the thread is stopped
             notify_worker_finished();
@@ -197,7 +202,7 @@ public class ProcessManager {
     public synchronized void start() {
         //Set the activity flag
         m_is_active = true;
-        
+
         //Start the observer
         m_observer.start_observing();
 
@@ -210,30 +215,55 @@ public class ProcessManager {
 
     /**
      * Allows to check if the manager is active (the SR procedure is running)
+     *
      * @return true if the manager is active, otherwise false
      */
     public synchronized boolean is_active() {
         return m_is_active;
     }
-    
+
+    /**
+     * Request stop of executors
+     *
+     * @param term_time_out the termination time out in seconds
+     */
+    private void stop_executors(final long term_time_out) {
+        if (!m_executor.isShutdown()) {
+            final int mgr_id = this.get_mgr_id();
+            //Await termination
+            try {
+                LOGGER.log(Level.INFO, "Requesting shut down for Process Manager {0}", mgr_id);
+                m_executor.shutdown();
+                if (!m_executor.awaitTermination(term_time_out, TimeUnit.SECONDS)) {
+                    m_executor.shutdownNow();
+                    if (!m_executor.awaitTermination(term_time_out, TimeUnit.SECONDS)) {
+                        LOGGER.log(Level.WARNING, "The Process Manager with id: {0} "
+                                + " could not shut down!", mgr_id);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                LOGGER.log(Level.WARNING, "Interrupted while waiting "
+                        + "for Process Manager {0} shut down", mgr_id);
+            }
+        }
+    }
+
     /**
      * Allows to stop the population manager
      *
-     * @param is_soft if soft then the thread executors are stopped softly
+     * @param term_time_out the termination time out in seconds
      */
-    public synchronized void stop(final boolean is_soft) {
+    public void stop(final long term_time_out) {
         //Stop the GP process if it is running
         request_stop();
 
         //Stop the executors
-        if (is_soft) {
-            m_executor.shutdown();
-        } else {
-            m_executor.shutdownNow();
-        }
-        
+        stop_executors(term_time_out);
+
         //Set the activity flag
-        m_is_active = false;
+        synchronized (this) {
+            m_is_active = false;
+        }
 
         //Stop the observer
         m_observer.stop_observing();
@@ -250,7 +280,7 @@ public class ProcessManager {
         --m_num_workers;
         //Check if all workers have been stoped
         if (m_num_workers == 0) {
-            this.stop(true);
+            this.stop(1);
         }
     }
 
