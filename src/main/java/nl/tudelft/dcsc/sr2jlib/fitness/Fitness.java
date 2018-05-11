@@ -21,17 +21,12 @@
  */
 package nl.tudelft.dcsc.sr2jlib.fitness;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  * The class that will be used for storing the fitness values
  *
  * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class Fitness {
-
-    private static final Logger LOGGER = Logger.getLogger(Fitness.class.getName());
 
     /**
      * Stores the fitness value
