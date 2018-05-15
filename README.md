@@ -1,4 +1,4 @@
-#Introduction
+# **Introduction**
 
 **SR2JLIB** is a Netbeans project supplying a Java library for grammar-guided *Symbolic Regression* (**SR**) [Koza93], powered by *Genetic Programming* (**GP**) [Koz94, WHM+97], and more specifically *Grammar-Guided Genetic Programming* (**GGGP**) [GCA+08].
 
@@ -21,7 +21,7 @@ Another feature of the library is that it allows for *Just In Time* compilation 
 
 Last but not least, is that the grammar provided for building expressions is probabilistic, each grammatical expression can be given a weight that defines its likelihood to be taken when choosing between expressions of the same type.
 
-#Using software
+# **Using software**
 
 Using software requires Netbeans IDE 8.2 or later and JDK v1.8 or later.
 Sample projects using the library are provided by:
@@ -40,7 +40,7 @@ It is a known issue with the Java 8 **JIT** compiler that its caches can become 
 ```
 These are to be provided as `java` command line parameters of the application using **SR2JLIB**. If needed, the cache sizes can be increased even further.
 
-#Main concepts
+# **Main concepts**
 
 This section explains how the library can be used by specifying:
 
@@ -48,7 +48,7 @@ This section explains how the library can be used by specifying:
 2. The library interfaces to be used;
 3. The observers and listeners to be implemented;
 
-##Grammar
+## Grammar
 
 The `grammar` is needed to define valid numeric and boolean expressions to be used as vector function components. It is defined as a set of new-line-separated grammar entries:
 
@@ -127,7 +127,7 @@ tR := [x1 - $floor(x1/$PI)*$PI](R) //domain for tangent
 //D - double constant
 ```
 
-##Main Interfaces
+## Main Interfaces
 
 **SR2JLIB** allows to run multiple SR processes in parallel on separate grids. Each of such processes is encapsulated inside an instance of a `nl.tudelft.dcsc.sr2jlib.ProcessManager` class. A single process manager can breed multi-dimensional vector functions. Each of the vector function dimension functions is defined by some grammar. Such a grammar can be individual per dimension or shared with some other dimension within the same or between different instances of `ProcessManager`. A grammar is defined by an instance of the `nl.tudelft.dcsc.sr2jlib.grammar.Grammar` class. Each instance thereof is to be supplied with a configuration object of type `nl.tudelft.dcsc.sr2jlib.grammar.GrammarConfig`. A general pattern for instantiating and setting up grammars is given below by means of an example:
 
@@ -170,7 +170,7 @@ manager.stop(true);
 
 As one can see, all of the `Grammar` and `ProcessManager` class parameters are encapsulated in the corresponding configuration objects. The latter, including the suggested and default values will be discussed in the next section. Also note that, stopping the process manager is typically done once a sufficiently fit individual is found. Doing that, will be discussed in the subsequent section on listeners, observers and computers.
 
-##Configuration objects
+## Configuration objects
 
 Let us consider the two configuration objects `GrammarConfig` and `ProcessManagerConfig`.
 
@@ -286,7 +286,7 @@ The value of `mgr_id` depends on the number of managers, we recommend using cont
 
 Last but not least `done_cb` and `observer` provide the call-back objects. The former is just an object realizing a functional interface to be called once the process manager has finished the SR procedure. The latter is a grid observing object allowing to monitor all of the population changes. We shall discuss these and other interfaces in the next section. 
 
-##Listeners, Observers, and Computers
+## Listeners, Observers, and Computers
 
 There are several main interfaces that are to be realized by the application using  **SR2JLIB**, the first three of them are:
 
@@ -336,7 +336,7 @@ In order to set the fitness computer class as the one to be used, it is require
 
 method of the `FitnessManager` class.
 
-##Expression trees
+## Expression trees
 
 Each individual's vector function dimension is represented in a form of a Java numeric expression. The latter is initially stored in a form of a tree where non-terminal nodes correspond to functions (numeric or boolean expressions) and terminal nodes correspond to numerical or boolean constants, or free variables. The classes used to form expression trees are stored in the `nl.tudelft.dcsc.sr2jlib.grammar.expr` package. Each tree node is an instance of the `Expression` class. Non-terminal nodes are instances of the `FunctExpr` class and terminal ones of the `TermExpr` class. The latter has three child classes:
 
@@ -346,7 +346,7 @@ Each individual's vector function dimension is represented in a form of a Java n
 
 All of these have interface functions in order to traverse through the expression tree and get information of each of its nodes. For more detail consider reading the Java Doc.
 
-#Licensing 
+# **Licensing** 
 
 This is a free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -354,7 +354,7 @@ This software is distributed in the hope that it will be useful, but **WITHOUT A
 
 You should have received a copy of the GNU General Public License along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-#Literature
+# **Literature**
 
 1. [Koza93] John R. Koza; Martin A. Keane; James P. Rice (1993). "Performance improvement of machine learning via automatic discovery of facilitating functions as applied to a problem of symbolic system identification" (PDF). IEEE International Conference on Neural Networks. San Francisco: IEEE. pp. 191–198.
 2. [Koz94] John R. Koza. Genetic programming as a means for programming computers by natural selection. Statistics and Computing, 4(2):87–112, 1994.
