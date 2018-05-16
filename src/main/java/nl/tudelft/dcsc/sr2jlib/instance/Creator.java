@@ -161,14 +161,23 @@ public class Creator {
                 + "public class " + class_name + " {\n"
                 + "  public static int " + GET_NUM_DOFS + "(){\n"
                 + "    return " + funct.length + ";\n"
-                + "}\n"
-                + "public static void " + EVALUATE + "\n"
+                + "}\n";
+        for (int idx = 0; idx < funct.length; ++idx) {
+            contents += "public static double " + EVALUATE + idx + "\n"
+                    + "(\n"
+                    + "double[] " + VAR_NAME + "\n"
+                    + "){\n"
+                    + "return " + funct[idx] + ";\n"
+                    + "}\n";
+        }
+        contents += "public static void " + EVALUATE + "\n"
                 + "(\n"
                 + "double[] " + VAR_NAME + ",\n"
                 + "double[] " + RES_NAME + "\n"
                 + "){\n";
         for (int idx = 0; idx < funct.length; ++idx) {
-            contents += RES_NAME + "[" + idx + "] = " + funct[idx] + ";\n";
+            contents += RES_NAME + "[" + idx + "] = "
+                    + EVALUATE + idx + "(" + VAR_NAME + ")" + ";\n";
         }
         contents += "}\n";
         contents += "}";

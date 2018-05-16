@@ -44,6 +44,7 @@ public class ProcessManager {
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class.getName());
 
     private boolean m_is_active;
+    private boolean m_is_stopping;
     private final FinishedCallback m_done_cb;
     private final GridObserver m_observer;
     private int m_num_workers;
@@ -60,6 +61,7 @@ public class ProcessManager {
      */
     public ProcessManager(final ProcessManagerConfig conf) {
         this.m_is_active = false;
+        this.m_is_stopping = false;
         this.m_done_cb = conf.m_done_cb;
         this.m_observer = conf.m_observer;
         this.m_init_pop_mult = conf.m_init_pop_mult;
@@ -175,7 +177,7 @@ public class ProcessManager {
      */
     private synchronized void request_stop() {
         LOGGER.log(Level.INFO, "Requesting stop of the Process "
-                + "Manager {0} workers", this.get_mgr_id());
+                + "Manager (id:{0}) workers", this.get_mgr_id());
         m_num_reps = m_max_num_reps;
     }
 
@@ -225,59 +227,100 @@ public class ProcessManager {
     }
 
     /**
+     * Allows to check if the manager is being stopped (the SR procedure is
+     * still finishing)
+     *
+     * @return true if the manager is being stopped, otherwise false
+     */
+    public synchronized boolean is_stopping() {
+        return m_is_stopping;
+    }
+
+    /**
      * Request stop of executors
      *
      * @param term_time_out the termination time out in seconds
      */
     private void stop_executors(final long term_time_out) {
         final int mgr_id = this.get_mgr_id();
-        LOGGER.log(Level.INFO, "Start stopping the Process Manager {0} executors", mgr_id);
+        LOGGER.log(Level.INFO, "Started stopping the Process Manager (id:{0}) executor", mgr_id);
         if (!m_executor.isShutdown()) {
             //Await termination
             try {
-                LOGGER.log(Level.INFO, "Requesting shut down for Process Manager {0}", mgr_id);
+                LOGGER.log(Level.INFO, "Requesting a shut down for Process Manager (id:{0})", mgr_id);
                 m_executor.shutdown();
                 if (!m_executor.awaitTermination(term_time_out, TimeUnit.SECONDS)) {
                     m_executor.shutdownNow();
                     if (!m_executor.awaitTermination(term_time_out, TimeUnit.SECONDS)) {
-                        LOGGER.log(Level.WARNING, "The Process Manager with id: {0} "
+                        LOGGER.log(Level.WARNING, "Process Manager (id:{0}) "
                                 + " could not shut down!", mgr_id);
                     }
                 }
             } catch (InterruptedException ex) {
                 LOGGER.log(Level.WARNING, "Interrupted while waiting "
-                        + "for Process Manager {0} shut down", mgr_id);
+                        + "for Process Manager (id:{0}) shut down", mgr_id);
             }
         }
-        LOGGER.log(Level.INFO, "Finished stopping the Process Manager {0} executors", mgr_id);
+        LOGGER.log(Level.INFO, "Finished stopping the Process "
+                + "Manager (id:{0}) executor", mgr_id);
+    }
+
+    /**
+     * Notifies the waiting threads
+     *
+     * @param obj the object to be used to notify waiting threads or null if not
+     * needed
+     */
+    private void notify_waiting(final Object obj) {
+        if (obj != null) {
+            synchronized (obj) {
+                obj.notifyAll();
+            }
+        }
     }
 
     /**
      * Allows to stop the population manager
      *
      * @param term_time_out the termination time out in seconds
+     * @param obj the notifier to be used to notify the waiting thread that the
+     * stopping is finished or null if no notification is needed
      */
-    public void stop(final long term_time_out) {
-        //Stop the GP process if it is running
-        request_stop();
+    public synchronized void stop(final long term_time_out, final Object obj) {
+        if (m_is_active && !m_is_stopping) {
+            m_is_stopping = true;
 
-        //Stop the executors
-        stop_executors(term_time_out);
+            //De-couple the notifications to prevent deadlocks
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            executor.submit(() -> {
+                //Stop the GP process if it is running
+                request_stop();
 
-        //Set the activity flag
-        synchronized (this) {
-            m_is_active = false;
+                //Stop the executors
+                stop_executors(term_time_out);
+
+                //The stopping is done
+                synchronized (ProcessManager.this) {
+                    m_is_stopping = false;
+                    m_is_active = false;
+                    //Notify the possibly waiting thread
+                    notify_waiting(obj);
+                }
+
+                try {
+                    //Stop the observer
+                    m_observer.stop_observing();
+                    //Notify that process is stopped
+                    m_done_cb.finished(this);
+                } catch (Throwable ex) {
+                    LOGGER.log(Level.SEVERE, "Exception during the call-back!", ex);
+                }
+            });
+            executor.shutdown();
+        } else {
+            //Notify the possibly waiting thread
+            notify_waiting(obj);
         }
-        
-        //De-couple the notifications to prevent deadlocks
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-            //Stop the observer
-            m_observer.stop_observing();
-
-            //Notify that process is stopped
-            m_done_cb.finished(this);
-        });
     }
 
     /**
@@ -288,7 +331,7 @@ public class ProcessManager {
         --m_num_workers;
         //Check if all workers have been stoped
         if (m_num_workers == 0) {
-            this.stop(1);
+            this.stop(1, null);
         }
     }
 
