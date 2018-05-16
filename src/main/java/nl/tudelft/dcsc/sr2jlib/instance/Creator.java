@@ -139,6 +139,15 @@ public class Creator {
             return m_class_name;
         }
 
+        /**
+         * Allows to retrieve the class content.
+         *
+         * @return the class content
+         */
+        public String get_content() {
+            return m_contents;
+        }
+
         @Override
         public CharSequence getCharContent(boolean ignoreEncodingErrors)
                 throws IOException {
@@ -174,7 +183,7 @@ public class Creator {
      *
      * @throws IllegalArgumentException
      */
-    private static void compile(Iterable<InMemoryJavaFileObject> files) throws IllegalArgumentException {
+    private static void compile(InMemoryJavaFileObject file) throws IllegalArgumentException {
 
         // for compilation diagnostic message processing on compilation WARNING/ERROR
         MyDiagnosticListener diag = new MyDiagnosticListener();
@@ -187,12 +196,13 @@ public class Creator {
         Iterable options = Arrays.asList("-XDuseUnsharedTable",
                 "-d", CLASS_OUTPUT_FOLDER);
         JavaCompiler.CompilationTask task = JAVAC.getTask(null, fileManager,
-                diag, options, null, files);
+                diag, options, null, Arrays.asList(file));
 
         if (!task.call()) {
-            final String class_name = files.iterator().next().get_class_name();
+            final String class_name = file.get_class_name();
             throw new IllegalArgumentException("Failed compiling an Individual"
-                    + class_name + ", msg: " + diag.message);
+                    + class_name + ", msg: \n" + diag.message
+                    + ", content: \n" + file.get_content());
         }
     }
 
@@ -225,7 +235,7 @@ public class Creator {
         //Get the file object
         InMemoryJavaFileObject file = getJavaFileObject(class_name, full_name, function);
         //Call the compiler
-        compile(Arrays.asList(file));
+        compile(file);
 
         return full_name.replaceAll("\\.", "/");
     }

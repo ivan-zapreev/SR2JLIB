@@ -40,9 +40,9 @@ import java.util.stream.IntStream;
  * @author <a href="mailto:ivan.zapreev@gmail.com"> Dr. Ivan S. Zapreev </a>
  */
 public class ProcessManager {
-    
+
     private static final Logger LOGGER = Logger.getLogger(ProcessManager.class.getName());
-    
+
     private boolean m_is_active;
     private final FinishedCallback m_done_cb;
     private final GridObserver m_observer;
@@ -66,9 +66,9 @@ public class ProcessManager {
         this.m_num_workers = conf.m_num_workers;
         this.m_max_num_reps = conf.m_max_num_reps;
         this.m_breeder = new BreedingManager(m_observer, conf);
-        
+
         this.m_num_reps = 0;
-        
+
         final UncaughtExceptionHandler ueh = new UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread th, Throwable ex) {
@@ -77,7 +77,7 @@ public class ProcessManager {
         };
         this.m_executor = Executors.newFixedThreadPool(m_num_workers, new ThreadFactory() {
             private int idx = 0;
-            
+
             @Override
             public Thread newThread(Runnable r) {
                 Thread th = new Thread(r);
@@ -95,18 +95,18 @@ public class ProcessManager {
      * iterations
      */
     private class GpWorkerTask implements Runnable {
-        
+
         GpWorkerTask(final int idx) {
             super();
             LOGGER.log(Level.FINE, "Worker {0} created!", idx);
         }
-        
+
         @Override
         public void run() {
             LOGGER.log(Level.INFO, "Process Manager {0} -> Thread {1} started!",
                     new Object[]{ProcessManager.this.get_mgr_id(),
                         Thread.currentThread().getName()});
-            
+
             final List<Individual> inds = new ArrayList();
             try {
                 //Generate initial population
@@ -132,7 +132,7 @@ public class ProcessManager {
             } catch (Throwable ex) {
                 LOGGER.log(Level.SEVERE, "Exception in a GP worker, premature finish!", ex);
             }
-            
+
             LOGGER.log(Level.INFO, "Process Manager {0} -> Thread {1} finished!",
                     new Object[]{ProcessManager.this.get_mgr_id(),
                         Thread.currentThread().getName()});
@@ -174,6 +174,8 @@ public class ProcessManager {
      * @return true if a mutation is granted
      */
     private synchronized void request_stop() {
+        LOGGER.log(Level.INFO, "Requesting stop of the Process "
+                + "Manager {0} workers", this.get_mgr_id());
         m_num_reps = m_max_num_reps;
     }
 
@@ -228,8 +230,9 @@ public class ProcessManager {
      * @param term_time_out the termination time out in seconds
      */
     private void stop_executors(final long term_time_out) {
+        final int mgr_id = this.get_mgr_id();
+        LOGGER.log(Level.INFO, "Start stopping the Process Manager {0} executors", mgr_id);
         if (!m_executor.isShutdown()) {
-            final int mgr_id = this.get_mgr_id();
             //Await termination
             try {
                 LOGGER.log(Level.INFO, "Requesting shut down for Process Manager {0}", mgr_id);
@@ -246,6 +249,7 @@ public class ProcessManager {
                         + "for Process Manager {0} shut down", mgr_id);
             }
         }
+        LOGGER.log(Level.INFO, "Finished stopping the Process Manager {0} executors", mgr_id);
     }
 
     /**
@@ -264,12 +268,16 @@ public class ProcessManager {
         synchronized (this) {
             m_is_active = false;
         }
+        
+        //De-couple the notifications to prevent deadlocks
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            //Stop the observer
+            m_observer.stop_observing();
 
-        //Stop the observer
-        m_observer.stop_observing();
-
-        //Notify that process is stopped
-        m_done_cb.finished(this);
+            //Notify that process is stopped
+            m_done_cb.finished(this);
+        });
     }
 
     /**
