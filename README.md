@@ -6,36 +6,53 @@
 
 ## **Introduction**
 
-**SR2JLIB** is a Netbeans project supplying a Java library for grammar-guided *Symbolic Regression* (**SR**) [Koza93], powered by *Genetic Programming* (**GP**) [Koz94, WHM+97], and more specifically *Grammar-Guided Genetic Programming* (**GGGP**) [GCA+08].
+**SR2JLIB** is a Netbeans project supplying a Java library for *Grammar-Guided Symbolic Regression* (**GGSR** or **SR** for short) [Koza93], powered by *Genetic Programming* (**GP**) [Koz94, WHM+97], and more specifically *Grammar-Guided Genetic Programming* (**GGGP** or just **GP** within our context) [GCA+08].
 
-The approach realized in this library differs from standard GP in that the population is placed on a 2D grid. The latter defines a habitat for the individuals which are reproducing in parallel and thus there is no notion of staging. The reproduction process is ensured by multiple parallel threads randomly choosing individuals from the current population and allowing them to reproduce trying to settle the offsprings in the pre-defined neighborhood of their ancestors. Each time a new individual is created it is attempted to be placed in the neighboring cells based on tournament or probabilistic tournament selection. 
+The genetic approach realized in this library differs from the standard one in that the population is placed on a 2D grid. The latter defines a habitat for the individuals which are reproducing in parallel and thus there is no notion of staging as in the classical GP. The reproduction process is ensured by multiple parallel threads randomly choosing individuals from the current population and allowing them to reproduce and settle the offsprings in the pre-defined neighborhood of the ancestors. Each time a new individual is created it is attempted to be placed in the neighboring cells based on (probabilistic) tournament selection. SR2JLIB therefore provides a massively parallelized GP process running multiple parallel reproductions of individuals with local tournament selections thereof. The entire process can be seen as running multiple parallel (but interacting through the habitat grid) classical GP processes.
 
-It is important to note that one can also limit the life-time of an individual. This is done by defining the minimum and maximum number of reproductions. The actual number of reproductions is then chosen based on the individual's fitness but within the pre-specified bounds. 
+It is important to note that one can also limit the life-time of an individual. This can be done by defining the minimum and maximum number of reproductions. The actual number of reproductions is then chosen based on the individual's fitness but within the pre-specified bounds. 
 
-The realized GP procedure allows to fit (multi-dimensional) vector functions to data. SR can be done for vector function sub-components simultaneously or in parallel. The functions allowed by the library are arbitrary Java numeric expressions and allow using conditional expressions of the form:
+The realized SR2JLIB allows to fit multi-dimensional real-valued vector functions to data. Each of the vector function's dimension may have its own (probabilistic) grammar, used to generate individuals in a grammar-guided way. Several SR processes can be run in parallel on different grids.
+
+Functions allowed to be used within grammar descriptions are numeric and logic expressions of the *Java* language. For instance, it is allowed to user conditional expressions of the form:
 
 ```
  <boolean expression> ? <numeric expression> : <numeric expression>
 ```
  
-Moreover, numeric expressions allow for using any of the java.lang.Math class function primitives. Our strong believe is that cross over operation when breeding function mostly makes little sense. Therefore, the only genetic operations supported are mutations which can be of the next two types:
+Moreover, numeric expressions allow for using any of the `java.lang.Math` class function primitives.
+
+
+The only genetic operations supported by SR2JLIB are mutations which can be of the next two types:
  
- 1. Mutating an existing expression into a completely new one of the same type;
- 2. Mutating the given function into another function with the same arity and with the same arguments;
+ 1. Mutating a (sub-)expression into a completely new one, but preserving the expression's type;
+ 2. Mutating a function or an operation into another one of the same arity and keeping the arguments;
 
-Another feature of the library is that it allows for *Just In Time* compilation (**JIT**) of the individuals in a form java classes and dynamic loading thereof into **JVM**. The latter is done seamlessly for the library's user and allows one to compute individual's fitness from Java code or using *Java Native Interface* (**JNI**) in order to compute fitness from, e.g., C or C++ code.
+Such a typical operation as crossover, also called recombination (a genetic operator used to combine the genetic information of two parents to generate new offsprings) is not supported. The reason is that in **GGGP** an individual is represented by a list of expression trees and the sub-expressions thereof can typically not be seen as genes carrying context independent pieces of individual's qualities. It is only when the grammar is set up in such a way that each of the terms used in crossover carries information about the individual in a context independent (context invariant) way, that crossover can make sense. An example of such a situation is a grammar for Fourier series where each summation term represents some frequency. Combining different summation terms from multiple parents would then mean inheriting certain frequencies thereof in their offsprings.
 
-Last but not least, is that the grammar provided for building expressions is probabilistic, each grammatical expression can be given a weight that defines its likelihood to be taken when choosing between expressions of the same type.
+Another feature of the library is that our **GGGP** grammar are probabilistic. I.e. each grammatical expression can be given a weight that defines its likelihood to be taken when choosing between expressions of the same type.
+
+Last but not least, SR2JLIB optionally allows for *Just In Time* compilation (**JIT**) of individuals in the form of java classes and dynamic loading thereof into **JVM**. The latter is done seamlessly for the SR2JLIB users but allows them to compute individual's fitness from:
+
+* `Java` code
+	* Executing individual's vector functions
+* `C` or `C++` code
+	* By means of *Java Native Interface* (**JNI**)
 
 ## **Using software**
 
-Using software requires Netbeans IDE 8.2 or later and JDK v1.8 or later.
-Sample projects using the library are provided by:
+Using software requires [Netbeans IDE, version >= 8.2](https://netbeans.org), and [JDK, version >= 1.8](https://en.wikipedia.org/wiki/Java_Development_Kit). It is recommended to download and install Netbeans IDE pre-packed with JDK and C++ support (corresponds to configuration **All** on the [here](https://netbeans.org/downloads/));
 
-1. <https://github.com/ivan-zapreev/SR2JLIB_EX>
-2. <https://github.com/ivan-zapreev/SCOTS2SR>
+### Documentation and sample projects
 
-The former is a Java-only project giving a basic example of how the library can be used, it contains multiple comments and is self-explanatory. The latter is a more involved **JNI** based project for symbolic fitting of SCOTSv2.0 <https://gitlab.lrz.de/matthias/SCOTSv0.2> BDD controllers [Run16]. We also suggest taking a thorough look at the Java Doc of the library stored in the `./api/` folder of the project.
+The library's source-code documentation (Java Doc) is stored in the `./api/` folder of the project. Sample projects using the library, which can be used as examples, are provided by:
+
+1. [SR2JLIB_EX](https://github.com/ivan-zapreev/SR2JLIB_EX):
+	* A basic command-line example of how the library can be used
+2. [SCOTS2SR](https://github.com/ivan-zapreev/SCOTS2SR):
+	* A **JNI**-based project for symbolic fitting [SCOTSv2.0 BDD controllers](https://gitlab.lrz.de/matthias/SCOTSv0.2) [Run16] 
+
+### Using SR2JLIB in your projects
 
 It is a known issue with the Java 8 **JIT** compiler that its caches can become full thus preventing further individuals' compilation and potentially preventing the library to function properly. Therefore, in case a JIT compilation is to be used, see the section on library interfaces further in the text, we suggest supplying java with the following command line arguments:
 
@@ -75,26 +92,35 @@ B - boolean expression
 L - logical constant
 V - variable
 D - double constant
+F - float constant
 ```
 
-Note that, `L`, `V`, and `D` are build-in and R with B are to be specified by the user. Boolean expressions (`B`) only require specification if are implicitly or explicitly used to define `R`. Specifying `R` is compulsory, as any genetically breed function will be of type `R`.
+Note that, `L`, `V`, `D`, and `F` are implemented by the library, and `R` with `B` are pre-defined as types but their grammar is to be specified by the user. Boolean expressions (`B`) only require specification if are implicitly or explicitly used to define `R`. Specifying `R` is compulsory, as any genetically breed function will be of type `R`.
 
-Each `expression` is defined by: : *(i)* a function (some numeric/boolean expression); *(ii)* its argument types; *(iii)* an optional `weight` - a positive double defining the probability distribution over expressions of the same type (if omitted the default value is 1.0):
+Each `expression` is defined as:
 
 ```
-	<expression> := [<function>](<types>) |
+	<expression> := [<function>]() |
+	                [<function>](<types>) |
 	                [<function>](<types>)@<weight>
 ```
 
-Here `function` is a valid java expression (boolean or numerical depending on the context) which uses parameters named `x` followed by indexes starting with `1` (i.e. x1, x2, x3). Function parameters define function arguments and their types are given by the `types` entry in the definition above. The latter is a comma-separated list:
+Where 
+
+* `<function>` is some valid numeric or boolean expression;
+* `<types>` a list of expression's argument types;
+* `<weight>` defines the expression's probability to be chosen;
+	* If not specified, it is assumed to be 1.0;
+
+Note that, `<function>` may use parameters named `x` followed by indexes starting with `1` (i.e. `x1`, `x2`, `x3`). These parameters represent expression 's arguments whose types must be specified using the `<types>` entry in the definition above. The latter is a comma-separated list:
 
 ```
 	<types> := <type> | <types>, <type>
 ```
 
-where the number of elements in the list must corresponds to the number of distinct `function` parameters. Moreover, the parameter index matches the corresponding `type` position in the list. 
+Clearly, the number of elements in the `<types>` list must corresponds to the number of distinct `<function>` parameters. Moreover, the parameter index matches the corresponding `<type>` position in the list. 
 
-Any `function` may use the `java.lang.Math` class by referencing it with the `$` sign. For instance `$sin(x1)` will be interpreted as `Math.sin(x1)`. Consider the following valid expression examples:
+Any `<function>` may use the `java.lang.Math` class by referencing it with the `$` sign. For instance `$sin(x1)` will be interpreted as `Math.sin(x1)`. Consider the following valid expression examples:
 
 ```
 [x1 - $floor(x1)](D)
@@ -108,8 +134,9 @@ The last thing to note is that the textual grammar description allows for commen
 For completeness, below we give an example grammar which assumes uniform probability distribution over all expressions except for `[$abs(x1)](R)@0.1` and `x1](L) @0.01` which are given a smaller chance to be used (by setting the weights to 0.1 and 0.01 respectively):
 
 ```
-R := [x1](D); [x1](V); [$abs(x1)](R)@0.1; [$sin(x1)](R); [$cos(x1)](R); [$sinh(x1)](R); [$cosh(x1)](R); [$tan(x1)](tR); [$tanh(x1)](R); [$acos(x1)](aR); [$asin(x1)](aR); [$sqrt(x1)](npR); [$cbrt(x1)](R); [$ceil(x1)](R); [$floor(x1)](R); [$log(x1)](lR); [$log10(x1)](lR); [$max(x1,x2)](R,R) ; [$min(x1,x2)](R, R) ; [$pow(x1,x2)](R,pI); [$signum(x1)](R); [-x1](R); [x1/x2](R,nR); [x1*x2](R,R); [x1+x2](R,R); [x1-x2](R,R) ; [x1 ? x2 : x3](B,R,R)
-B := [x1](L) @0.01; [x1!=x2](R,R); [x1==x2](R,R); [x1<x2](R,R); [x1<=x2](R,R); [x1>x2](R,R); [x1>=x2](R,R); [!x1](B) ; [x1&&x2](B,B); [x1||x2](B,B)
+R := [x1](D); [x1](V); [$abs(x1)](R)@0.1; [$sin(x1)](R); [$cos(x1)](R); [$sinh(x1)](R); [$cosh(x1)](R); [$tan(x1)](tR); [$tanh(x1)](R); [$acos(x1)](aR); [$asin(x1)](aR); [$sqrt(x1)](npR); [$cbrt(x1)](R); [$ceil(x1)](R); [$floor(x1)](R); [$log(x1)](lR); [$log10(x1)](lR); [$max(x1,x2)](R,R); [$min(x1,x2)](R, R); [$pow(x1,x2)](R,pI); [$signum(x1)](R); [-x1](R); [x1/x2](R,nR); [x1*x2](R,R); [x1+x2](R,R); [x1-x2](R,R); [x1 ? x2 : x3](B,R,R)
+
+B := [x1](L) @0.01; [x1!=x2](R,R); [x1==x2](R,R); [x1<x2](R,R); [x1<=x2](R,R); [x1>x2](R,R); [x1>=x2](R,R); [!x1](B); [x1&&x2](B,B); [x1||x2](B,B)
 
 //User defined by demand:
 aR :=  [x1 - $floor(x1)](R) //domain for acos/asin
@@ -131,6 +158,7 @@ tR := [x1 - $floor(x1/$PI)*$PI](R) //domain for tangent
 //L - logical constant
 //V - variable
 //D - double constant
+//F - float constant
 ```
 
 ### Main Interfaces
